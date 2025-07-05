@@ -1,0 +1,130 @@
+saad-website-ecommerce/
+│
+├── config/
+│   └── db.js
+│
+├── controllers/
+│   ├── adminController.js
+│   ├── authController.js
+│   ├── cartController.js
+│   ├── offerController.js
+│   ├── orderController.js
+│   ├── paymentController.js
+│   ├── productController.js
+│   └── userController.js
+│
+├── middleware/
+│   ├── auth.js
+│   └── upload.js
+│
+├── models/
+│   ├── Cart.js
+│   ├── Offer.js
+│   ├── Order.js
+│   ├── Product.js
+│   └── User.js
+│
+├── routes/
+│   ├── adminRoutes.js
+│   ├── authRoutes.js
+│   ├── cartRoutes.js
+│   ├── offerRoutes.js
+│   ├── orderRoutes.js
+│   ├── paymentRoutes.js
+│   ├── productRoutes.js
+│   └── userRoutes.js
+│
+├── utils/
+│   ├── cloudinary.js
+│   ├── generateToken.js
+│   ├── payfast.js
+│   ├── sendEmail.js
+│   └── stripe.js
+│
+├── uploads/
+│   └── (uploaded images/files)
+│
+├── frontend/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── authAPI.js
+│   │   │   ├── axiosClient.js
+│   │   │   ├── cartAPI.js
+│   │   │   ├── offerAPI.js
+│   │   │   ├── orderAPI.js
+│   │   │   └── productAPI.js
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   │   ├── AdminRoute.jsx
+│   │   │   │   ├── DevBanner.jsx
+│   │   │   │   ├── ErrorBoundary.jsx
+│   │   │   │   ├── LoadingSpinner.jsx
+│   │   │   │   ├── ProtectedRoute.jsx
+│   │   │   │   └── TestCredentials.jsx
+│   │   │   ├── layout/
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   └── Header.jsx
+│   │   │   └── product/
+│   │   │       ├── ProductCard.jsx
+│   │   │       ├── ProductFilters.jsx
+│   │   │       └── ProductSort.jsx
+│   │   ├── pages/
+│   │   │   ├── AboutUs.jsx
+│   │   │   ├── Admin/
+│   │   │   │   ├── CreateProduct.jsx
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── EditProduct.jsx
+│   │   │   │   ├── Orders.jsx
+│   │   │   │   └── Products.jsx
+│   │   │   ├── Auth/
+│   │   │   │   ├── ForgotPassword.jsx
+│   │   │   │   ├── Login.jsx
+│   │   │   │   ├── Register.jsx
+│   │   │   │   ├── ResetPassword.jsx
+│   │   │   │   └── VerifyOTP.jsx
+│   │   │   ├── Blog.jsx
+│   │   │   ├── Cart.jsx
+│   │   │   ├── Checkout.jsx
+│   │   │   ├── Contact.jsx
+│   │   │   ├── Home.jsx
+│   │   │   ├── OrderDetail.jsx
+│   │   │   ├── PrivacyPolicy.jsx
+│   │   │   ├── ProductDetail.jsx
+│   │   │   ├── Products.jsx
+│   │   │   ├── Profile/
+│   │   │   │   ├── Orders.jsx
+│   │   │   │   └── Profile.jsx
+│   │   │   ├── ShippingInfo.jsx
+│   │   │   ├── TermsOfService.jsx
+│   │   │   └── User/
+│   │   │       └── Dashboard.jsx
+│   │   ├── redux/
+│   │   │   ├── slices/
+│   │   │   │   ├── authSlice.js
+│   │   │   │   ├── cartSlice.js
+│   │   │   │   ├── offerSlice.js
+│   │   │   │   ├── orderSlice.js
+│   │   │   │   └── productSlice.js
+│   │   │   └── store.js
+│   │   ├── theme/
+│   │   │   └── muiTheme.js
+│   │   ├── utils/
+│   │   │   ├── formatters.js
+│   │   │   └── validators.js
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── vite-env.d.ts
+│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   └── vite.config.ts
+│
+├── .env
+├── .gitignore
+├── package.json
+├── server.js
+├── README.md
+└── ORDER_WORKFLOWS.md 
