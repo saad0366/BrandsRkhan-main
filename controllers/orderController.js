@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
-const sendEmail = require('../utils/sendEmail');
+const { sendEmail, sendInvoiceEmail } = require('../utils/sendEmail');
+const generateInvoice = require('../utils/generateInvoice');
 
 // Place a new order
 exports.placeOrder = async (req, res) => {
@@ -17,6 +18,18 @@ exports.placeOrder = async (req, res) => {
       totalPrice,
     });
     const createdOrder = await order.save();
+    
+    // Generate and send invoice
+    try {
+      const user = await User.findById(req.user._id);
+      const { filepath, invoiceNumber } = await generateInvoice(createdOrder, user);
+      await sendInvoiceEmail(user.email, createdOrder._id.toString(), invoiceNumber, filepath);
+      console.log(`Invoice generated and sent for order ${createdOrder._id}`);
+    } catch (invoiceError) {
+      console.error('Error generating/sending invoice:', invoiceError);
+      // Don't fail the order if invoice generation fails
+    }
+    
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -118,6 +131,18 @@ exports.reorder = async (req, res) => {
       totalPrice: oldOrder.totalPrice,
     });
     await newOrder.save();
+    
+    // Generate and send invoice for reorder
+    try {
+      const user = await User.findById(req.user._id);
+      const { filepath, invoiceNumber } = await generateInvoice(newOrder, user);
+      await sendInvoiceEmail(user.email, newOrder._id.toString(), invoiceNumber, filepath);
+      console.log(`Invoice generated and sent for reorder ${newOrder._id}`);
+    } catch (invoiceError) {
+      console.error('Error generating/sending invoice for reorder:', invoiceError);
+      // Don't fail the reorder if invoice generation fails
+    }
+    
     await sendEmail(req.user.email, 'Order Placed', `Your reorder #${newOrder._id} has been placed.`);
     res.status(201).json(newOrder);
   } catch (error) {

@@ -2,22 +2,40 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
+const { getInvoiceInfo } = require('../utils/cleanupInvoices');
+const path = require('path');
 
-// Place order
-router.post('/', protect, orderController.placeOrder);
-// Get user's orders
-router.get('/myorders', protect, orderController.getMyOrders);
-// Get all orders (admin, with filters/pagination)
-router.get('/', protect, authorize('admin'), orderController.getAllOrders);
-// Order stats (admin)
-router.get('/stats', protect, authorize('admin'), orderController.getOrderStats);
-// Get order by ID
-router.get('/:id', protect, orderController.getOrderById);
-// Cancel order (user)
-router.patch('/:id/cancel', protect, orderController.cancelOrder);
-// Reorder (user)
-router.post('/:id/reorder', protect, orderController.reorder);
-// Update order status (admin)
-router.patch('/:id/status', protect, authorize('admin'), orderController.updateOrderStatus);
+// Protected routes
+router.use(protect);
+
+// User routes
+router.post('/', orderController.placeOrder);
+router.get('/myorders', orderController.getMyOrders);
+router.get('/:id', orderController.getOrderById);
+router.patch('/:id/cancel', orderController.cancelOrder);
+router.post('/:id/reorder', orderController.reorder);
+
+// Download invoice (user and admin)
+router.get('/:id/invoice', async (req, res) => {
+  try {
+    // First check if user has access to this order
+    const order = await orderController.getOrderById(req, res);
+    if (res.statusCode !== 200) return; // Error already handled
+    
+    const invoiceInfo = getInvoiceInfo(req.params.id);
+    if (!invoiceInfo.exists) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    
+    res.download(invoiceInfo.filepath, invoiceInfo.filename);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin routes
+router.get('/', authorize('admin'), orderController.getAllOrders);
+router.get('/stats', authorize('admin'), orderController.getOrderStats);
+router.patch('/:id/status', authorize('admin'), orderController.updateOrderStatus);
 
 module.exports = router; 

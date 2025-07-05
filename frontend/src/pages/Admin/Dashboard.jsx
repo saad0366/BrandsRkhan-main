@@ -301,8 +301,8 @@ const AdminDashboard = () => {
               </Box>
             </CardContent>
           </Card>
+          </Grid>
         </Grid>
-      </Grid>
       )}
 
       {/* Quick Actions */}

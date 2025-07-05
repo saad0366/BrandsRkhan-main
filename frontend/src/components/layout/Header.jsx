@@ -180,9 +180,9 @@ const Header = () => {
     } else {
       authMenuItems = [
         { text: 'User Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-        { text: 'Profile', icon: <AccountCircle />, path: '/profile' },
+    { text: 'Profile', icon: <AccountCircle />, path: '/profile' },
         { text: 'My Orders', icon: <ShoppingCart />, path: '/orders' },
-        { text: 'Logout', icon: <Logout />, action: handleLogout },
+    { text: 'Logout', icon: <Logout />, action: handleLogout },
       ];
     }
   } else {

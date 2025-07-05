@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 const connectDB = require('./config/db');
+const { cleanupOldInvoices } = require('./utils/cleanupInvoices');
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,12 @@ app.use(cors({
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
+}
+
+// Create invoices directory if it doesn't exist
+const invoicesDir = path.join(__dirname, 'invoices');
+if (!fs.existsSync(invoicesDir)) {
+  fs.mkdirSync(invoicesDir);
 }
 
 // Serve static files from uploads directory
@@ -70,4 +77,13 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Test the server at: http://localhost:${PORT}/test`);
+  
+  // Schedule invoice cleanup (run daily at 2 AM)
+  setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 2 && now.getMinutes() === 0) {
+      console.log('Running scheduled invoice cleanup...');
+      cleanupOldInvoices(); // Uses default from config
+    }
+  }, 60000); // Check every minute
 });

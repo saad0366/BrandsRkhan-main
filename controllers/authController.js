@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail');
+const { sendWelcomeEmail } = require('../utils/sendEmail');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -28,11 +28,7 @@ exports.register = async (req, res) => {
 
     // Send welcome email
     try {
-      await sendEmail(
-        user.email,
-        'Welcome to Brands-R-khan!',
-        `Hi ${user.name},\n\nWelcome to Brands-R-khan! We are thrilled to have you join our luxury watch community.\n\nExplore our premium collection, enjoy exclusive offers, and experience the best in quality and service.\n\nIf you have any questions, our support team is here to help.\n\nHappy shopping!\n\nBest regards,\nThe Brands-R-khan Team`
-      );
+      await sendWelcomeEmail(user.email, user.name);
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
     }
