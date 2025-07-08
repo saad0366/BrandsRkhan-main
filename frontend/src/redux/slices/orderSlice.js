@@ -66,10 +66,14 @@ export const updateOrderStatus = createAsyncThunk('orders/updateOrderStatus', as
 
 export const fetchOrderStats = createAsyncThunk('orders/fetchOrderStats', async (_, { rejectWithValue }) => {
     try {
-    const response = await orderApi.fetchOrderStats();
-      return response.data;
-  } catch (err) {
-    return rejectWithValue(err.response?.data?.error || 'Failed to fetch order stats');
+        const response = await orderApi.fetchOrderStats();
+        // Handle both { ... } and { success: true, data: { ... } }
+        if (response.data && response.data.data) {
+            return response.data.data;
+        }
+        return response.data;
+    } catch (err) {
+        return rejectWithValue(err.response?.data?.error || 'Failed to fetch order stats');
     }
 });
 

@@ -1,65 +1,58 @@
 import axiosClient from './axiosClient';
 
-// Mock offers data
-const mockOffers = [
-  {
-    id: 1,
-    code: 'WELCOME10',
-    type: 'percentage',
-    value: 10,
-    description: '10% off on your first order',
-    minOrder: 100,
-    validUntil: '2024-12-31',
-    isActive: true
-  },
-  {
-    id: 2,
-    code: 'SAVE50',
-    type: 'fixed',
-    value: 50,
-    description: '$50 off on orders above $500',
-    minOrder: 500,
-    validUntil: '2024-12-31',
-    isActive: true
-  },
-  {
-    id: 3,
-    code: 'LUXURY20',
-    type: 'percentage',
-    value: 20,
-    description: '20% off on luxury watches',
-    category: 'luxury',
-    validUntil: '2024-12-31',
-    isActive: true
-  }
-];
-
-export const fetchOffers = async () => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return mockOffers.filter(offer => offer.isActive);
+// Get all active offers for users
+export const getActiveOffers = async () => {
+  return await axiosClient.get('/offers/active');
 };
 
-export const applyOfferCode = async (code) => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const offer = mockOffers.find(o => o.code === code && o.isActive);
-  if (!offer) {
-    throw new Error('Invalid or expired offer code');
-  }
-  
-  return offer;
+// Get all offers for admin
+export const getAllOffers = async () => {
+  return await axiosClient.get('/offers');
 };
 
+// Create new offer (admin only)
 export const createOffer = async (offerData) => {
+  if (offerData instanceof FormData) {
+    return await axiosClient.post('/offers', offerData, {
+      headers: { 'Content-Type': undefined },
+    });
+  }
   return await axiosClient.post('/offers', offerData);
 };
 
+// Update existing offer (admin only)
 export const updateOffer = async (id, offerData) => {
+  if (offerData instanceof FormData) {
+    return await axiosClient.put(`/offers/${id}`, offerData, {
+      headers: { 'Content-Type': undefined },
+    });
+  }
   return await axiosClient.put(`/offers/${id}`, offerData);
 };
 
+// Delete offer (admin only)
 export const deleteOffer = async (id) => {
   return await axiosClient.delete(`/offers/${id}`);
+};
+
+// Search for specific offer by ID (admin only)
+export const searchOffer = async (id) => {
+  return await axiosClient.get(`/offers/${id}`);
+};
+
+// Legacy functions for backward compatibility
+export const fetchOffers = async () => {
+  return await getActiveOffers();
+};
+
+export const applyOfferCode = async (code) => {
+  // This function can be used for applying offer codes if needed
+  const offers = await getActiveOffers();
+  const offer = offers.find(o => o.code === code && o.isActive);
+  if (!offer) {
+    throw new Error('Invalid or expired offer code');
+  }
+  return offer;
 };
 
 export const getOfferUsage = async (id) => {

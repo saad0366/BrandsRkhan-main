@@ -11,6 +11,10 @@ router.use(protect);
 // User routes
 router.post('/', orderController.placeOrder);
 router.get('/myorders', orderController.getMyOrders);
+
+// Admin routes
+router.get('/stats', authorize('admin'), orderController.getOrderStats);
+router.get('/', authorize('admin'), orderController.getAllOrders);
 router.get('/:id', orderController.getOrderById);
 router.patch('/:id/cancel', orderController.cancelOrder);
 router.post('/:id/reorder', orderController.reorder);
@@ -32,10 +36,5 @@ router.get('/:id/invoice', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Admin routes
-router.get('/', authorize('admin'), orderController.getAllOrders);
-router.get('/stats', authorize('admin'), orderController.getOrderStats);
-router.patch('/:id/status', authorize('admin'), orderController.updateOrderStatus);
 
 module.exports = router; 

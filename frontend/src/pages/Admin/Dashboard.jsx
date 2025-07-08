@@ -54,6 +54,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { getOrderStats, getAllOrders, clearError } from '../../redux/slices/orderSlice';
 import { getProducts } from '../../redux/slices/productSlice';
+import { getActiveOffers } from '../../redux/slices/offerSlice';
 import { formatCurrency } from '../../utils/formatters';
 
 const AdminDashboard = () => {
@@ -82,12 +83,15 @@ const AdminDashboard = () => {
   const orderStats = useSelector(state => state.orders.stats);
   const recentOrders = useSelector(state => state.orders.orders);
   const ordersLoading = useSelector(state => state.orders.loading);
+  const orderError = useSelector(state => state.orders.error);
   const { items: products, loading: productsLoading } = useSelector(state => state.products);
+  const { available: offers, loading: offersLoading } = useSelector(state => state.offers);
 
   useEffect(() => {
     dispatch(getOrderStats());
     dispatch(getAllOrders({ page: 1, limit: 5 }));
     dispatch(getProducts({ limit: 5 }));
+    dispatch(getActiveOffers());
     return () => {
       dispatch(clearError());
     };
@@ -183,12 +187,29 @@ const AdminDashboard = () => {
     );
   }
 
+  // Show error if stats failed to load
   if (!orderStats || typeof orderStats !== 'object') {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
         <Alert severity="error" sx={{ mb: 4 }}>
-          Failed to load order statistics. Please check your backend API.
+          Failed to load order statistics. Please check your backend API.<br/>
+          {orderError && <div style={{ marginTop: 8 }}>{orderError}</div>}
         </Alert>
+      </Container>
+    );
+  }
+
+  // Show backend errors if present in stats
+  if (orderStats.errors && orderStats.errors.length > 0) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+        <Alert severity="warning" sx={{ mb: 4 }}>
+          Order statistics loaded with warnings:<br/>
+          <ul style={{ textAlign: 'left', margin: '8px auto', display: 'inline-block' }}>
+            {orderStats.errors.map((err, idx) => <li key={idx}>{err}</li>)}
+          </ul>
+        </Alert>
+        {/* Optionally, show the dashboard with zeros or partial stats below */}
       </Container>
     );
   }

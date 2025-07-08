@@ -13,7 +13,7 @@ import {
   IconButton,
   Chip,
 } from '@mui/material';
-import { ShoppingCart, Favorite, FavoriteBorder, Watch } from '@mui/icons-material';
+import { ShoppingCart, Favorite, FavoriteBorder, Watch, LocalOffer } from '@mui/icons-material';
 import { addItemToCart, fetchCart } from '../../redux/slices/cartSlice';
 import { formatCurrency, getStockStatus } from '../../utils/formatters';
 import { toast } from 'react-toastify';
@@ -22,10 +22,19 @@ const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated } = useSelector(state => state.auth);
+  const { available: offers } = useSelector(state => state.offers);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const stockStatus = getStockStatus(product.stock);
+
+  // Find the best applicable offer for this product
+  const applicableOffer = offers && offers.length > 0
+    ? offers.filter(offer =>
+        (offer.applicableProducts && offer.applicableProducts.includes(product._id)) ||
+        (offer.applicableCategories && offer.applicableCategories.includes(product.category))
+      ).sort((a, b) => b.discountPercentage - a.discountPercentage)[0]
+    : null;
 
   const handleAddToCart = async (e) => {
     console.log('Add to Cart clicked', product);
@@ -217,17 +226,62 @@ const ProductCard = ({ product }) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography 
-            variant="h6" 
-            component="span" 
-            sx={{
-              color: '#00FFFF',
-              fontWeight: 700,
-              textShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
-            }}
-          >
-            {formatCurrency(product.price)}
-          </Typography>
+          <Box>
+            {applicableOffer ? (
+              <Box>
+                <Typography 
+                  variant="body2" 
+                  component="span" 
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    textDecoration: 'line-through',
+                    display: 'block',
+                  }}
+                >
+                  {formatCurrency(product.price)}
+                </Typography>
+                <Typography 
+                  variant="h6" 
+                  component="span" 
+                  sx={{
+                    color: '#00FFFF',
+                    fontWeight: 700,
+                    textShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+                  }}
+                >
+                  {formatCurrency(product.price * (1 - applicableOffer.discountPercentage / 100))}
+                </Typography>
+              </Box>
+            ) : (
+              <Typography 
+                variant="h6" 
+                component="span" 
+                sx={{
+                  color: '#00FFFF',
+                  fontWeight: 700,
+                  textShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+                }}
+              >
+                {formatCurrency(product.price)}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+            {applicableOffer && (
+              <Chip
+                label={`${applicableOffer.discountPercentage}% OFF`}
+                size="small"
+                icon={<LocalOffer />}
+                sx={{
+                  background: 'rgba(255, 0, 255, 0.2)',
+                  borderColor: 'rgba(255, 0, 255, 0.4)',
+                  color: '#FF00FF',
+                  border: '1px solid rgba(255, 0, 255, 0.4)',
+                  fontSize: '0.7rem',
+                  height: 20,
+                }}
+              />
+            )}
           <Chip
             label={stockStatus.text}
             size="small"
@@ -244,6 +298,7 @@ const ProductCard = ({ product }) => {
               fontSize: '0.75rem',
             }}
           />
+          </Box>
         </Box>
 
         <Typography

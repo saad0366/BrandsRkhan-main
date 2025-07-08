@@ -23,8 +23,11 @@ import {
   SupportAgent,
   Star,
   Watch,
+  LocalOffer,
+  Schedule,
 } from '@mui/icons-material';
 import { getProducts } from '../redux/slices/productSlice';
+import { getActiveOffers } from '../redux/slices/offerSlice';
 import ProductCard from '../components/product/ProductCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { formatCurrency } from '../utils/formatters';
@@ -44,11 +47,13 @@ const Home = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { items: products, loading, error } = useSelector(state => state.products);
+  const { available: offers, loading: offersLoading } = useSelector(state => state.offers);
   const [heroIndex, setHeroIndex] = useState(0);
   const heroTimer = useRef();
 
   useEffect(() => {
     dispatch(getProducts({ limit: 6 }));
+    dispatch(getActiveOffers());
     heroTimer.current = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
     }, 4000); // Change image every 4 seconds
@@ -56,6 +61,14 @@ const Home = () => {
   }, [dispatch]);
 
   const featuredProducts = products.slice(0, 6);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   const categories = [
     {
@@ -582,6 +595,220 @@ const Home = () => {
         </Grid>
       </Container>
 
+      {/* Active Offers Section */}
+      {offers && offers.length > 0 && (
+        <Box sx={{ py: 8, background: 'rgba(255, 255, 255, 0.02)' }}>
+          <Container maxWidth="lg">
+            <Typography 
+              variant="h3" 
+              textAlign="center" 
+              gutterBottom 
+              sx={{ 
+                mb: 6,
+                fontFamily: 'Orbitron, sans-serif',
+                color: '#ffffff',
+                textShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
+              }}
+            >
+              Special Offers
+            </Typography>
+            <Grid container spacing={4}>
+              {offers.map((offer) => (
+                <Grid item xs={12} md={6} key={offer._id}>
+                  <Card
+                    sx={{
+                      height: '400px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 215, 0, 0.2)',
+                      borderRadius: 4,
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+                        zIndex: 3,
+                      },
+                      '&:hover': {
+                        transform: 'translateY(-12px) scale(1.02)',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3)',
+                        borderColor: 'rgba(255, 215, 0, 0.4)',
+                      },
+                    }}
+                  >
+                    {/* Banner Image */}
+                    <Box
+                      sx={{
+                        height: '250px',
+                        flexShrink: 0,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%)',
+                          zIndex: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={offer.bannerImage || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&h=250&fit=crop&crop=center'}
+                        alt={offer.name}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.4s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                          },
+                        }}
+                      />
+                      {/* Discount Badge */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 16,
+                          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                          color: '#0e0e10',
+                          padding: '8px 16px',
+                          borderRadius: '25px',
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          fontFamily: 'Rajdhani, sans-serif',
+                          boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
+                          zIndex: 3,
+                          backdropFilter: 'blur(10px)',
+                        }}
+                      >
+                        {offer.discountPercentage}% OFF
+                      </Box>
+                      {/* Status Badge */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          left: 16,
+                          background: 'rgba(0, 255, 0, 0.9)',
+                          color: '#ffffff',
+                          padding: '4px 12px',
+                          borderRadius: '15px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          fontFamily: 'Rajdhani, sans-serif',
+                          boxShadow: '0 0 15px rgba(0, 255, 0, 0.4)',
+                          zIndex: 3,
+                        }}
+                      >
+                        ACTIVE
+                      </Box>
+                    </Box>
+                    
+                    {/* Offer Details */}
+                    <CardContent 
+                      sx={{ 
+                        p: 3, 
+                        position: 'relative', 
+                        zIndex: 2,
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        '&:last-child': {
+                          paddingBottom: 3,
+                        },
+                      }}
+                    >
+                      <Box>
+                        <Typography 
+                          variant="h5" 
+                          gutterBottom
+                          sx={{
+                            color: '#ffffff',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 700,
+                            fontSize: '1.3rem',
+                            mb: 1,
+                            textShadow: '0 0 10px rgba(255, 215, 0, 0.4)',
+                          }}
+                        >
+                          {offer.name}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            lineHeight: 1.6,
+                            fontSize: '0.95rem',
+                            mb: 2,
+                          }}
+                        >
+                          {offer.description}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{
+                            color: 'rgba(255, 215, 0, 0.9)',
+                            fontSize: '0.9rem',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Valid until: {formatDate(offer.endDate)}
+                        </Typography>
+                      </Box>
+                      
+                      {/* Call to Action */}
+                      <Box sx={{ textAlign: 'center', mt: 3 }}>
+                        <Button
+                          variant="contained"
+                          component={Link}
+                          to="/products"
+                          sx={{
+                            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                            color: '#0e0e10',
+                            px: 4,
+                            py: 1.5,
+                            borderRadius: '25px',
+                            fontWeight: 700,
+                            fontFamily: 'Rajdhani, sans-serif',
+                            textTransform: 'none',
+                            fontSize: '1rem',
+                            boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #FFA500 0%, #FFD700 100%)',
+                              boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+                              transform: 'translateY(-2px)',
+                            },
+                          }}
+                        >
+                          Shop Now & Save
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
+        </Box>
+      )}
+
       {/* Featured Products */}
       <Box sx={{ py: 8 }}>
         <Container maxWidth="lg">
@@ -678,72 +905,143 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Special Offer Banner */}
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, rgba(160, 32, 240, 0.2) 0%, rgba(255, 0, 255, 0.2) 100%)',
-          color: 'white',
-          py: 6,
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography 
-            variant="h4" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 600,
-              fontFamily: 'Orbitron, sans-serif',
-              textShadow: '0 0 20px rgba(255, 0, 255, 0.6)',
-            }}
-          >
-            Limited Time Offer
-          </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              mb: 3, 
-              opacity: 0.9,
-              color: 'rgba(255, 255, 255, 0.9)',
-            }}
-          >
-            Get 20% off on all luxury watches. Use code: LUXURY20
-          </Typography>
-          <Chip
-            label="LUXURY20"
-            sx={{
-              background: 'rgba(255, 0, 255, 0.2)',
-              borderColor: 'rgba(255, 0, 255, 0.4)',
-              color: '#FF00FF',
-              border: '1px solid rgba(255, 0, 255, 0.4)',
-              fontSize: '1rem',
-              px: 2,
-              py: 1,
-              mr: 2,
-              boxShadow: '0 0 10px rgba(255, 0, 255, 0.3)',
-            }}
-          />
-          <Button
-            variant="contained"
-            sx={{
-              background: 'linear-gradient(135deg, #FF00FF 0%, #a020f0 100%)',
-              color: '#ffffff',
-              '&:hover': { 
-                background: 'linear-gradient(135deg, #FF4DFF 0%, #b44df0 100%)',
-                boxShadow: '0 0 20px rgba(255, 0, 255, 0.4)',
-              },
-              px: 4,
-              py: 1.5,
-            }}
-            component={Link}
-            to="/products?category=luxury"
-          >
-            Shop Luxury Watches
-          </Button>
-        </Container>
-      </Box>
+      {/* Dynamic Offers Section */}
+      {offers && offers.length > 0 && (
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, rgba(160, 32, 240, 0.2) 0%, rgba(255, 0, 255, 0.2) 100%)',
+            color: 'white',
+            py: 6,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <Container maxWidth="lg">
+            <Typography 
+              variant="h4" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 600,
+                fontFamily: 'Orbitron, sans-serif',
+                textShadow: '0 0 20px rgba(255, 0, 255, 0.6)',
+                textAlign: 'center',
+                mb: 4,
+              }}
+            >
+              Special Offers
+            </Typography>
+            <Grid container spacing={3}>
+              {offers.slice(0, 3).map((offer) => (
+                <Grid item xs={12} md={4} key={offer._id}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      textAlign: 'center',
+                      height: '100%',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: 3,
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        borderColor: 'rgba(255, 0, 255, 0.4)',
+                        boxShadow: '0 0 20px rgba(255, 0, 255, 0.2)',
+                        transform: 'translateY(-4px)',
+                      },
+                    }}
+                  >
+                    <LocalOffer
+                      sx={{
+                        fontSize: 48,
+                        color: '#FF00FF',
+                        mb: 2,
+                        filter: 'drop-shadow(0 0 10px rgba(255, 0, 255, 0.5))',
+                      }}
+                    />
+                    <Typography 
+                      variant="h6" 
+                      gutterBottom
+                      sx={{
+                        color: '#ffffff',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {offer.title}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        mb: 2,
+                      }}
+                    >
+                      {offer.description}
+                    </Typography>
+                    <Chip
+                      label={`${offer.discountPercentage}% OFF`}
+                      sx={{
+                        background: 'rgba(255, 0, 255, 0.2)',
+                        borderColor: 'rgba(255, 0, 255, 0.4)',
+                        color: '#FF00FF',
+                        border: '1px solid rgba(255, 0, 255, 0.4)',
+                        fontSize: '1rem',
+                        px: 2,
+                        py: 1,
+                        mb: 2,
+                        boxShadow: '0 0 10px rgba(255, 0, 255, 0.3)',
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                      <Schedule fontSize="small" sx={{ mr: 0.5, color: 'rgba(255, 255, 255, 0.7)' }} />
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Valid until {formatDate(offer.endDate)}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        background: 'linear-gradient(135deg, #FF00FF 0%, #a020f0 100%)',
+                        color: '#ffffff',
+                        '&:hover': { 
+                          background: 'linear-gradient(135deg, #FF4DFF 0%, #b44df0 100%)',
+                          boxShadow: '0 0 20px rgba(255, 0, 255, 0.4)',
+                        },
+                        px: 3,
+                        py: 1,
+                      }}
+                      component={Link}
+                      to="/offers"
+                    >
+                      View Details
+                    </Button>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+            {offers.length > 3 && (
+              <Box sx={{ textAlign: 'center', mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  sx={{
+                    borderColor: 'rgba(255, 0, 255, 0.4)',
+                    color: '#FF00FF',
+                    '&:hover': {
+                      borderColor: 'rgba(255, 0, 255, 0.6)',
+                      background: 'rgba(255, 0, 255, 0.1)',
+                    },
+                  }}
+                  component={Link}
+                  to="/offers"
+                >
+                  View All Offers
+                </Button>
+              </Box>
+            )}
+          </Container>
+        </Box>
+      )}
 
       {/* Features Section */}
       <Container maxWidth="lg" sx={{ py: 8 }}>

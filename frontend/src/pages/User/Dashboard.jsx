@@ -45,8 +45,11 @@ import {
   Person,
   Settings,
   History,
+  LocalOffer,
+  Schedule,
 } from '@mui/icons-material';
 import { getMyOrders, clearError } from '../../redux/slices/orderSlice';
+import { getActiveOffers } from '../../redux/slices/offerSlice';
 import { formatCurrency } from '../../utils/formatters';
 import { toast } from 'react-toastify';
 
@@ -55,10 +58,12 @@ const UserDashboard = () => {
   const [tabValue, setTabValue] = useState(0);
   const { user, isLoading: authLoading } = useSelector(state => state.auth);
   const { myOrders, loading: ordersLoading, error } = useSelector(state => state.orders);
+  const { available: offers, loading: offersLoading } = useSelector(state => state.offers);
 
   useEffect(() => {
     if (user) {
       dispatch(getMyOrders({ page: 1, limit: 5 }));
+      dispatch(getActiveOffers());
     }
     return () => {
       dispatch(clearError());
@@ -328,6 +333,7 @@ const UserDashboard = () => {
       <Paper sx={{ width: '100%' }}>
         <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tab label="Recent Orders" />
+          <Tab label="Active Offers" />
           <Tab label="Wishlist" />
           <Tab label="Reviews" />
         </Tabs>
@@ -429,8 +435,89 @@ const UserDashboard = () => {
           )}
                         </Box>
 
-        {/* Wishlist Tab */}
+        {/* Active Offers Tab */}
         <Box role="tabpanel" hidden={tabValue !== 1} sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Active Offers</Typography>
+            <Button
+              variant="outlined"
+              component={Link}
+              to="/offers"
+              startIcon={<LocalOffer />}
+            >
+              View All Offers
+            </Button>
+          </Box>
+          {offersLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : !offers || offers.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <LocalOffer sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                No active offers
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Check back soon for great deals and promotions!
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {offers.map((offer) => (
+                <Grid item xs={12} sm={6} md={4} key={offer._id}>
+                  <Card 
+                    elevation={2}
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'transform 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: 4,
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <LocalOffer color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="h6" component="h3">
+                          {offer.title}
+                        </Typography>
+                      </Box>
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
+                        {offer.description}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Chip
+                          label={`${offer.discountPercentage}% OFF`}
+                          color="success"
+                          size="small"
+                          sx={{ mr: 1 }}
+                        />
+                      </Box>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Schedule fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Valid until {new Date(offer.endDate).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+
+        {/* Wishlist Tab */}
+        <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">My Wishlist</Typography>
           </Box>
@@ -440,7 +527,7 @@ const UserDashboard = () => {
                           </Box>
 
         {/* Reviews Tab */}
-        <Box role="tabpanel" hidden={tabValue !== 2} sx={{ p: 3 }}>
+        <Box role="tabpanel" hidden={tabValue !== 3} sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">My Reviews</Typography>
           </Box>

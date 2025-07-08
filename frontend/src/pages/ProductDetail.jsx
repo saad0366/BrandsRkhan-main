@@ -29,9 +29,11 @@ import {
   LocalShipping,
   Security,
   Assignment,
+  LocalOffer,
 } from '@mui/icons-material';
 import { getProductById, clearSelectedProduct } from '../redux/slices/productSlice';
 import { addItemToCart, fetchCart } from '../redux/slices/cartSlice';
+import { getActiveOffers } from '../redux/slices/offerSlice';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { formatCurrency, getStockStatus } from '../utils/formatters';
 import { toast } from 'react-toastify';
@@ -41,6 +43,7 @@ const ProductDetail = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selectedProduct: product, loading } = useSelector(state => state.products);
+  const { available: offers } = useSelector(state => state.offers);
   const { isAuthenticated } = useSelector(state => state.auth);
   
   const [quantity, setQuantity] = useState(1);
@@ -50,6 +53,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     dispatch(getProductById(id));
+    dispatch(getActiveOffers());
     
     return () => {
       dispatch(clearSelectedProduct());
@@ -83,6 +87,14 @@ const ProductDetail = () => {
   }
 
   const stockStatus = getStockStatus(product.stock);
+
+  // Find the best applicable offer for this product
+  const applicableOffer = offers && offers.length > 0
+    ? offers.filter(offer =>
+        (offer.applicableProducts && offer.applicableProducts.includes(product._id)) ||
+        (offer.applicableCategories && offer.applicableCategories.includes(product.category))
+      ).sort((a, b) => b.discountPercentage - a.discountPercentage)[0]
+    : null;
 
   const handleAddToCart = async () => {
     console.log('Add to Cart clicked', product);
@@ -213,9 +225,33 @@ const ProductDetail = () => {
             </Box>
 
             {/* Price */}
-            <Typography variant="h3" color="primary" sx={{ mb: 2, fontWeight: 700 }}>
-              {formatCurrency(product.price)}
-            </Typography>
+            <Box sx={{ mb: 2 }}>
+              {applicableOffer ? (
+                <Box>
+                  <Typography variant="h4" color="text.secondary" sx={{ textDecoration: 'line-through', mb: 1 }}>
+                    {formatCurrency(product.price)}
+                  </Typography>
+                  <Typography variant="h3" color="success.main" sx={{ fontWeight: 700, mb: 1 }}>
+                    {formatCurrency(product.price * (1 - applicableOffer.discountPercentage / 100))}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <LocalOffer color="success" />
+                    <Chip
+                      label={`${applicableOffer.discountPercentage}% OFF`}
+                      color="success"
+                      size="small"
+                    />
+                  </Box>
+                  <Typography variant="body2" color="success.main">
+                    Save {formatCurrency(product.price * applicableOffer.discountPercentage / 100)} with this offer!
+                  </Typography>
+                </Box>
+              ) : (
+                <Typography variant="h3" color="primary" sx={{ fontWeight: 700 }}>
+                  {formatCurrency(product.price)}
+                </Typography>
+              )}
+            </Box>
 
             {/* Stock Status */}
             <Box sx={{ mb: 3 }}>

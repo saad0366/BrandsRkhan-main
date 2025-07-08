@@ -1,12 +1,12 @@
 module.exports = {
   // Company information
   company: {
-    name: 'Your Store Name',
+    name: 'Brands R Khan',
     address: '123 Business Street',
-    city: 'City, State 12345',
+    city: 'Lahore, Pakistan',
     phone: '(555) 123-4567',
-    email: 'info@yourstore.com',
-    website: 'https://yourstore.com'
+    email: 'info@brandsrkhan.com',
+    website: 'https://brandsrkhan.com'
   },
   
   // Invoice settings

@@ -1,7 +1,8 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
-const { sendEmail, sendInvoiceEmail } = require('../utils/sendEmail');
+const { sendEmail, sendInvoiceEmail, sendReorderConfirmationEmail } = require('../utils/sendEmail');
 const generateInvoice = require('../utils/generateInvoice');
+const mongoose = require('mongoose');
 
 // Place a new order
 exports.placeOrder = async (req, res) => {
@@ -110,7 +111,45 @@ exports.cancelOrder = async (req, res) => {
     if (order.isPaid) return res.status(400).json({ error: 'Cannot cancel a paid order' });
     order.status = 'cancelled';
     await order.save();
-    await sendEmail(order.user.email, 'Order Cancelled', `Your order #${order._id} has been cancelled.`);
+    await sendEmail(order.user.email, 'Order Cancelled', `Your order #${order._id} has been cancelled.`, `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
+        <h1 style="color: #856404; margin: 0; text-align: center;">Order Cancelled</h1>
+      </div>
+      
+      <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
+        <p style="color: #666; font-size: 16px; margin-bottom: 20px;">Dear Customer,</p>
+        
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          We have received your request to cancel your order. Your order has been successfully cancelled as requested.
+        </p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <h3 style="color: #333; margin: 0 0 10px 0;">Cancelled Order Details:</h3>
+          <p style="margin: 5px 0; color: #666;"><strong>Order ID:</strong> ${order._id}</p>
+          <p style="margin: 5px 0; color: #666;"><strong>Cancellation Date:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h4 style="color: #856404; margin: 0 0 10px 0;">Important Information:</h4>
+          <ul style="color: #333; margin: 0; padding-left: 20px;">
+            <li>If you had already paid for this order, a refund will be processed</li>
+            <li>Refunds typically take 3-5 business days to appear in your account</li>
+            <li>You can place a new order anytime through your account</li>
+          </ul>
+        </div>
+        
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          We're sorry to see you go, but we understand that circumstances change. If you change your mind, you can always place a new order with the same items through your account.
+        </p>
+        
+        <div style="text-align: center; margin-top: 30px;">
+          <p style="color: #666; font-size: 14px;">We hope to see you again soon!</p>
+          <p style="color: #999; font-size: 12px;">This is an automated email. Please do not reply to this message.</p>
+        </div>
+      </div>
+    </div>
+    `);
     res.json({ message: 'Order cancelled' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -132,6 +171,16 @@ exports.reorder = async (req, res) => {
     });
     await newOrder.save();
     
+    // Send reorder confirmation email
+    try {
+      const user = await User.findById(req.user._id);
+      await sendReorderConfirmationEmail(user.email, newOrder._id.toString());
+      console.log(`Reorder confirmation email sent for order ${newOrder._id}`);
+    } catch (confirmationError) {
+      console.error('Error sending reorder confirmation email:', confirmationError);
+      // Don't fail the reorder if confirmation email fails
+    }
+    
     // Generate and send invoice for reorder
     try {
       const user = await User.findById(req.user._id);
@@ -142,8 +191,6 @@ exports.reorder = async (req, res) => {
       console.error('Error generating/sending invoice for reorder:', invoiceError);
       // Don't fail the reorder if invoice generation fails
     }
-    
-    await sendEmail(req.user.email, 'Order Placed', `Your reorder #${newOrder._id} has been placed.`);
     res.status(201).json(newOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -173,18 +220,30 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 exports.getOrderStats = async (req, res) => {
+  let totalOrders = 0, paidOrders = 0, deliveredOrders = 0, pendingOrders = 0, totalRevenue = 0;
+  let errorMessages = [];
+  // Check MongoDB connection
+  if (mongoose.connection.readyState !== 1) {
+    errorMessages.push('MongoDB is not connected');
+    return res.status(200).json({ totalOrders, paidOrders, deliveredOrders, pendingOrders, totalRevenue, errors: errorMessages });
+  }
   try {
-    const totalOrders = await Order.countDocuments();
-    const paidOrders = await Order.countDocuments({ isPaid: true });
-    const deliveredOrders = await Order.countDocuments({ isDelivered: true });
-    const pendingOrders = await Order.countDocuments({ isPaid: false });
-    const totalRevenueAgg = await Order.aggregate([
-      { $match: { isPaid: true } },
-      { $group: { _id: null, total: { $sum: "$totalPrice" } } }
-    ]);
-    const totalRevenue = totalRevenueAgg[0]?.total || 0;
-    res.json({ totalOrders, paidOrders, deliveredOrders, pendingOrders, totalRevenue });
+    try { totalOrders = await Order.countDocuments(); } catch (e) { errorMessages.push('Error counting total orders: ' + e.message); }
+    try { paidOrders = await Order.countDocuments({ isPaid: true }); } catch (e) { errorMessages.push('Error counting paid orders: ' + e.message); }
+    try { deliveredOrders = await Order.countDocuments({ isDelivered: true }); } catch (e) { errorMessages.push('Error counting delivered orders: ' + e.message); }
+    try { pendingOrders = await Order.countDocuments({ isPaid: false }); } catch (e) { errorMessages.push('Error counting pending orders: ' + e.message); }
+    try {
+      const totalRevenueAgg = await Order.aggregate([
+        { $match: { isPaid: true, totalPrice: { $type: 'number' } } },
+        { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+      ]);
+      totalRevenue = totalRevenueAgg[0]?.total || 0;
+    } catch (aggError) {
+      errorMessages.push('Revenue aggregation error: ' + aggError.message);
+    }
+    res.json({ totalOrders, paidOrders, deliveredOrders, pendingOrders, totalRevenue, errors: errorMessages });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    errorMessages.push('Order stats error: ' + error.message);
+    res.status(200).json({ totalOrders, paidOrders, deliveredOrders, pendingOrders, totalRevenue, errors: errorMessages });
   }
 }; 

@@ -115,10 +115,10 @@ const generateInvoice = async (order, user) => {
          .lineTo(550, currentY + 10)
          .stroke();
 
-      // Calculate tax
-      const subtotal = order.totalPrice;
-      const tax = subtotal * config.invoice.taxRate;
-      const total = subtotal + tax;
+      // Calculate totals with delivery charges
+      const subtotal = order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const deliveryCharges = 10; // Fixed delivery charge of $10
+      const total = subtotal + deliveryCharges;
 
       // Totals section
       currentY += 30;
@@ -127,8 +127,8 @@ const generateInvoice = async (order, user) => {
          .text(`${config.invoice.currencySymbol}${subtotal.toFixed(2)}`, 500, currentY);
       
       currentY += 20;
-      doc.text('Tax:', 400, currentY)
-         .text(`${config.invoice.currencySymbol}${tax.toFixed(2)}`, 500, currentY);
+      doc.text('Delivery Charges:', 400, currentY)
+         .text(`${config.invoice.currencySymbol}${deliveryCharges.toFixed(2)}`, 500, currentY);
       
       currentY += 20;
       doc.fontSize(config.pdf.fontSize.header)
