@@ -15,6 +15,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { checkAuthStatus } from './redux/slices/authSlice';
+import { getActiveOffers } from './redux/slices/offerSlice';
 
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'));
@@ -36,6 +37,7 @@ const AdminOrders = lazy(() => import('./pages/AdminOrders'));
 const CreateProduct = lazy(() => import('./pages/Admin/CreateProduct'));
 const EditProduct = lazy(() => import('./pages/Admin/EditProduct'));
 const OfferManagement = lazy(() => import('./pages/Admin/OfferManagement'));
+const OfferAnalytics = lazy(() => import('./pages/Admin/OfferAnalytics'));
 const UserDashboard = lazy(() => import('./pages/User/Dashboard'));
 const Blog = lazy(() => import('./pages/Blog'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -60,7 +62,18 @@ const AppContent = () => {
       }
     };
     
+    // Load active offers for the entire app
+    const loadOffers = async () => {
+      try {
+        await dispatch(getActiveOffers()).unwrap();
+      } catch (error) {
+        // Don't show error for offers loading failure, just continue
+        console.warn('Failed to load offers:', error);
+      }
+    };
+    
     initAuth();
+    loadOffers();
   }, [dispatch]);
 
   // Show loading spinner while checking auth
@@ -159,6 +172,11 @@ const AppContent = () => {
               <Route path="/admin/offers" element={
                 <AdminRoute>
                   <OfferManagement />
+                </AdminRoute>
+              } />
+              <Route path="/admin/offer-analytics" element={
+                <AdminRoute>
+                  <OfferAnalytics />
                 </AdminRoute>
               } />
                 </Routes>

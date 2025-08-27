@@ -98,16 +98,27 @@ const generateInvoice = async (order, user) => {
       // Table rows
       let currentY = tableTop + 30;
       order.orderItems.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
+        const effectivePrice = item.discountedPrice || item.price;
+        const itemTotal = effectivePrice * item.quantity;
         
         doc.font('Helvetica')
            .fontSize(config.pdf.fontSize.body)
            .text(item.name, 50, currentY)
-           .text(item.quantity.toString(), 250, currentY)
-           .text(`${config.invoice.currencySymbol}${item.price.toFixed(2)}`, 350, currentY)
-           .text(`${config.invoice.currencySymbol}${itemTotal.toFixed(2)}`, 450, currentY);
+           .text(item.quantity.toString(), 250, currentY);
         
-        currentY += 25;
+        // Show original price with strikethrough if discounted
+        if (item.discountedPrice && item.discountedPrice < item.price) {
+          doc.text(`${config.invoice.currencySymbol}${item.discountedPrice.toFixed(2)}`, 350, currentY)
+             .fontSize(8)
+             .text(`(was ${config.invoice.currencySymbol}${item.price.toFixed(2)})`, 350, currentY + 10)
+             .fontSize(config.pdf.fontSize.body);
+        } else {
+          doc.text(`${config.invoice.currencySymbol}${item.price.toFixed(2)}`, 350, currentY);
+        }
+        
+        doc.text(`${config.invoice.currencySymbol}${itemTotal.toFixed(2)}`, 450, currentY);
+        
+        currentY += item.discountedPrice && item.discountedPrice < item.price ? 35 : 25;
       });
 
       // Table bottom line
@@ -115,10 +126,11 @@ const generateInvoice = async (order, user) => {
          .lineTo(550, currentY + 10)
          .stroke();
 
-      // Calculate totals with delivery charges
-      const subtotal = order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const deliveryCharges = 10; // Fixed delivery charge of $10
-      const total = subtotal + deliveryCharges;
+      // Calculate totals
+      const subtotal = order.itemsPrice || order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const discount = order.discount || 0;
+      const shippingCharges = order.shippingPrice || 10;
+      const total = order.totalPrice;
 
       // Totals section
       currentY += 30;
@@ -126,9 +138,20 @@ const generateInvoice = async (order, user) => {
          .text('Subtotal:', 400, currentY)
          .text(`${config.invoice.currencySymbol}${subtotal.toFixed(2)}`, 500, currentY);
       
+      // Show discount if applicable
+      if (discount > 0) {
+        currentY += 20;
+        doc.font('Helvetica')
+           .fillColor('green')
+           .text('Discount:', 400, currentY)
+           .text(`-${config.invoice.currencySymbol}${discount.toFixed(2)}`, 500, currentY)
+           .fillColor('black');
+      }
+      
       currentY += 20;
-      doc.text('Delivery Charges:', 400, currentY)
-         .text(`${config.invoice.currencySymbol}${deliveryCharges.toFixed(2)}`, 500, currentY);
+      doc.font('Helvetica-Bold')
+         .text('Shipping:', 400, currentY)
+         .text(`${config.invoice.currencySymbol}${shippingCharges.toFixed(2)}`, 500, currentY);
       
       currentY += 20;
       doc.fontSize(config.pdf.fontSize.header)

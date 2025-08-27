@@ -400,4 +400,12 @@ This is an automated email. Please do not reply to this message.
   await sendEmail(to, `Reorder Confirmation #${orderId}`, textContent, htmlContent);
 };
 
-module.exports = { sendEmail, sendInvoiceEmail, sendWelcomeEmail, sendReorderEmail, sendOrderCancellationEmail, sendReorderConfirmationEmail }; 
+// Send offer expiry alert to admin
+async function sendOfferExpiryAlert(adminEmail, offer) {
+  const subject = `Offer Expiry Alert: ${offer.name}`;
+  const text = `The offer "${offer.name}" is expiring soon (ends at ${offer.endDate}).`;
+  const html = `<p>The offer <strong>${offer.name}</strong> is expiring soon (ends at <strong>${offer.endDate}</strong>).</p>`;
+  await sendEmail(adminEmail, subject, text, html);
+}
+
+module.exports = { sendEmail, sendInvoiceEmail, sendWelcomeEmail, sendReorderEmail, sendOrderCancellationEmail, sendReorderConfirmationEmail, sendOfferExpiryAlert }; 

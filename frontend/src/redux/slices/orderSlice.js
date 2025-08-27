@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as orderApi from '../../api/orderAPI';
+import * as orderApi from '../../api/orderApi';
 
 export const placeOrder = createAsyncThunk('orders/placeOrder', async (orderData, { rejectWithValue }) => {
     try {

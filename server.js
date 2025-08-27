@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const connectDB = require('./config/db');
 const { cleanupOldInvoices } = require('./utils/cleanupInvoices');
+const { runOfferAutomation } = require('./utils/offerAutomation');
 
 // Load environment variables
 dotenv.config();
@@ -62,6 +63,7 @@ app.use('/api/v1/orders', require('./routes/orderRoutes'));
 app.use('/api/v1/cart', require('./routes/cartRoutes'));
 app.use('/api/v1/offers', require('./routes/offerRoutes'));
 app.use('/api/v1/payments', require('./routes/paymentRoutes'));
+app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -77,7 +79,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Test the server at: http://localhost:${PORT}/test`);
-  
+
   // Schedule invoice cleanup (run daily at 2 AM)
   setInterval(() => {
     const now = new Date();
@@ -86,4 +88,10 @@ app.listen(PORT, () => {
       cleanupOldInvoices(); // Uses default from config
     }
   }, 60000); // Check every minute
+
+  // Schedule offer automation (run every hour)
+  setInterval(() => {
+    console.log('Running scheduled offer automation...');
+    runOfferAutomation().catch(err => console.error('Offer automation error:', err));
+  }, 60 * 60 * 1000); // Every hour
 });

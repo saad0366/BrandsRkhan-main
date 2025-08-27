@@ -73,10 +73,10 @@ const productSchema = new mongoose.Schema({
 
 // Virtual for average rating
 productSchema.virtual('averageRating').get(function() {
-  if (this.ratings.length === 0) {
+  if (!this.ratings || !Array.isArray(this.ratings) || this.ratings.length === 0) {
     return 0;
   }
-  const sum = this.ratings.reduce((acc, item) => acc + item.rating, 0);
+  const sum = this.ratings.reduce((acc, item) => acc + (item.rating || 0), 0);
   return sum / this.ratings.length;
 });
 

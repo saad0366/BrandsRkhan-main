@@ -30,7 +30,9 @@ import { getProducts } from '../redux/slices/productSlice';
 import { getActiveOffers } from '../redux/slices/offerSlice';
 import ProductCard from '../components/product/ProductCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import OfferBanner from '../components/offer/OfferBanner';
 import { formatCurrency } from '../utils/formatters';
+import { getApplicableOffer } from '../utils/discounts';
 
 const HERO_IMAGES = [
   'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&h=1080&fit=crop&crop=center',
@@ -60,7 +62,24 @@ const Home = () => {
     return () => clearInterval(heroTimer.current);
   }, [dispatch]);
 
+  // Reload offers when component mounts
+  useEffect(() => {
+    const loadOffers = async () => {
+      try {
+        await dispatch(getActiveOffers());
+      } catch (error) {
+        console.error('Failed to load offers:', error);
+      }
+    };
+    loadOffers();
+  }, [dispatch]);
+
   const featuredProducts = products.slice(0, 6);
+
+  // Find the best current offer (highest discount)
+  const bestOffer = offers && offers.length > 0
+    ? offers.slice().sort((a, b) => b.discountPercentage - a.discountPercentage)[0]
+    : null;
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -355,6 +374,9 @@ const Home = () => {
           </Box>
         </Container>
       </Box>
+
+      {/* Offer Banner Section */}
+      <OfferBanner offers={offers} />
 
       {/* Categories Section */}
       <Container maxWidth="lg" sx={{ py: 8 }}>

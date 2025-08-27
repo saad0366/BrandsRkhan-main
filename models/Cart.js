@@ -31,6 +31,20 @@ const cartSchema = new mongoose.Schema({
       }
     }
   ],
+  appliedOffer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Offer',
+    default: null
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
+  subtotalPrice: {
+    type: Number,
+    required: true,
+    default: 0.0
+  },
   totalPrice: {
     type: Number,
     required: true,
@@ -42,10 +56,15 @@ const cartSchema = new mongoose.Schema({
 
 // Calculate total price before saving
 cartSchema.pre('save', async function(next) {
-  this.totalPrice = this.items.reduce((total, item) => {
+  // Calculate subtotal (before discount)
+  this.subtotalPrice = this.items.reduce((total, item) => {
     return total + (item.price * item.quantity);
   }, 0);
+  
+  // Apply discount if offer is applied
+  this.totalPrice = this.subtotalPrice - (this.discountAmount || 0);
+  
   next();
 });
 
-module.exports = mongoose.model('Cart', cartSchema); 
+module.exports = mongoose.model('Cart', cartSchema);

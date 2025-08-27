@@ -1,45 +1,53 @@
 import React from 'react';
-import { Box, Alert, Button, Typography } from '@mui/material';
+import { Box, Typography, Button, Alert } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
   }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
   render() {
     if (this.state.hasError) {
       return (
-        <Box sx={{ p: 4, textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <Alert severity="error" sx={{ mb: 2, maxWidth: 600 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '200px',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ mb: 2, maxWidth: 500 }}>
             <Typography variant="h6" gutterBottom>
               Something went wrong
             </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              We're sorry, but something unexpected happened. Please try refreshing the page.
+            <Typography variant="body2" color="text.secondary">
+              {this.state.error?.message || 'An unexpected error occurred'}
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Refresh />}
-              onClick={() => window.location.reload()}
-              sx={{ mt: 1 }}
-            >
-              Refresh Page
-            </Button>
           </Alert>
+          <Button
+            variant="contained"
+            startIcon={<Refresh />}
+            onClick={this.handleRetry}
+          >
+            Try Again
+          </Button>
         </Box>
       );
     }
@@ -48,4 +56,4 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

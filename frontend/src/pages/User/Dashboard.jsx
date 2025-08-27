@@ -464,7 +464,7 @@ const UserDashboard = () => {
             </Box>
           ) : (
             <Grid container spacing={3}>
-              {offers.map((offer) => (
+              {(Array.isArray(offers) ? offers : offers ? [offers] : []).map((offer) => (
                 <Grid item xs={12} sm={6} md={4} key={offer._id}>
                   <Card 
                     elevation={2}

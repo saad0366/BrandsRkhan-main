@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -33,12 +33,17 @@ import {
 } from '../redux/slices/cartSlice';
 import { formatCurrency } from '../utils/formatters';
 import { toast } from 'react-toastify';
+import { getApplicableOffer, getDiscountedPrice } from '../utils/discounts';
+import CountdownTimer from '../components/common/CountdownTimer';
+import OfferApplicator from '../components/offer/OfferApplicator';
 
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, totalPrice, discount, total, loading, error } = useSelector(state => state.cart);
   const { isAuthenticated } = useSelector(state => state.auth);
+  const { available: offers } = useSelector(state => state.offers);
+  const [appliedOfferData, setAppliedOfferData] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -92,7 +97,11 @@ const Cart = () => {
       navigate('/login', { state: { from: { pathname: '/checkout' } } });
       return;
     }
-    navigate('/checkout');
+    navigate('/checkout', { state: { appliedOffer: appliedOfferData } });
+  };
+
+  const handleOfferApplied = (offerData) => {
+    setAppliedOfferData(offerData);
   };
 
   if (!isAuthenticated) {
@@ -180,28 +189,55 @@ const Cart = () => {
             </Button>
           </Box>
 
-          {items.map((item) => (
-            <Card key={item.product} sx={{ mb: 2 }}>
-              <CardContent>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={3}>
-                    <CardMedia
-                      component="img"
-                      height="120"
-                      image={item.image}
-                      alt={item.name}
-                      sx={{ borderRadius: 1, objectFit: 'cover' }}
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} sm={4}>
-                    <Typography variant="h6" gutterBottom>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      {formatCurrency(item.price)}
-                    </Typography>
-                  </Grid>
+          {items.map((item) => {
+            const offer = getApplicableOffer(item, offers);
+            const discountedPrice = getDiscountedPrice(item, offers);
+            return (
+              <Card key={item.product} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={3}>
+                      <CardMedia
+                        component="img"
+                        height="120"
+                        image={item.image}
+                        alt={item.name}
+                        sx={{ borderRadius: 1, objectFit: 'cover' }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="h6" gutterBottom>
+                        {item.name}
+                      </Typography>
+                      {offer ? (
+                        <>
+                          <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                            {formatCurrency(item.price)}
+                          </Typography>
+                          <Typography variant="h6" color="success.main">
+                            {formatCurrency(discountedPrice)}
+                          </Typography>
+                          <span style={{ color: 'green', fontWeight: 500, marginLeft: 8 }}>
+                            -{offer.discountPercentage}% {offer.name || ''}
+                          </span>
+                          {/* You saved X% message */}
+                          <span style={{ color: 'green', fontWeight: 500, marginLeft: 8 }}>
+                            You saved {Math.round(offer.discountPercentage)}%!
+                          </span>
+                          {/* Countdown timer */}
+                          {offer.endDate && (
+                            <div style={{ marginTop: 4 }}>
+                              <CountdownTimer endDate={offer.endDate} />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <Typography variant="h6" color="primary">
+                          {formatCurrency(item.price)}
+                        </Typography>
+                      )}
+                    </Grid>
                   
                   <Grid item xs={12} sm={3}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -252,7 +288,8 @@ const Cart = () => {
                 </Grid>
               </CardContent>
             </Card>
-          ))}
+          );
+        })}
 
           <Box sx={{ mt: 4 }}>
             <Button
@@ -276,13 +313,15 @@ const Cart = () => {
             <Box sx={{ my: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography>Subtotal:</Typography>
-                <Typography>{formatCurrency(totalPrice)}</Typography>
+                <Typography>{formatCurrency(appliedOfferData ? totalPrice : totalPrice)}</Typography>
               </Box>
               
-              {discount > 0 && (
+              {(discount > 0 || appliedOfferData?.discount) && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography color="success.main">Discount:</Typography>
-                  <Typography color="success.main">-{formatCurrency(discount)}</Typography>
+                  <Typography color="success.main">
+                    -{formatCurrency(appliedOfferData?.discount || discount)}
+                  </Typography>
                 </Box>
               )}
               
@@ -291,10 +330,17 @@ const Cart = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h6">Total:</Typography>
                 <Typography variant="h6" color="primary">
-                  {formatCurrency(total)}
+                  {formatCurrency(appliedOfferData?.finalTotal || total)}
                 </Typography>
               </Box>
             </Box>
+
+            {/* Offer Applicator */}
+            <OfferApplicator
+              cartItems={items}
+              cartTotal={totalPrice}
+              onOfferApplied={handleOfferApplied}
+            />
 
             <Button
               variant="contained"
@@ -302,6 +348,7 @@ const Cart = () => {
               size="large"
               onClick={handleCheckout}
               disabled={loading || items.length === 0}
+              sx={{ mt: 3 }}
             >
               {loading ? <CircularProgress size={24} /> : 'Proceed to Checkout'}
             </Button>

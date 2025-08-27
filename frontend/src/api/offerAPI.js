@@ -7,32 +7,43 @@ export const getActiveOffers = async () => {
 
 // Get all offers for admin
 export const getAllOffers = async () => {
-  return await axiosClient.get('/offers');
+  const response = await axiosClient.get('/admin/offers');
+  return response;
 };
 
 // Create new offer (admin only)
 export const createOffer = async (offerData) => {
-  if (offerData instanceof FormData) {
-    return await axiosClient.post('/offers', offerData, {
-      headers: { 'Content-Type': undefined },
-    });
-  }
-  return await axiosClient.post('/offers', offerData);
+  const config = offerData instanceof FormData ? {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  } : {};
+  
+  const response = await axiosClient.post('/admin/offers', offerData, config);
+  return response;
 };
 
 // Update existing offer (admin only)
 export const updateOffer = async (id, offerData) => {
-  if (offerData instanceof FormData) {
-    return await axiosClient.put(`/offers/${id}`, offerData, {
-      headers: { 'Content-Type': undefined },
-    });
-  }
-  return await axiosClient.put(`/offers/${id}`, offerData);
+  const config = offerData instanceof FormData ? {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  } : {};
+  
+  const response = await axiosClient.put(`/admin/offers/${id}`, offerData, config);
+  return response;
 };
 
 // Delete offer (admin only)
 export const deleteOffer = async (id) => {
-  return await axiosClient.delete(`/offers/${id}`);
+  return await axiosClient.delete(`/admin/offers/${id}`);
+};
+
+// Apply offer to cart
+export const applyOfferToCart = async (offerData) => {
+  return await axiosClient.post('/offers/apply', offerData);
+};
+
+// Validate offer
+export const validateOffer = async (offerData) => {
+  return await axiosClient.post('/offers/validate', offerData);
 };
 
 // Search for specific offer by ID (admin only)

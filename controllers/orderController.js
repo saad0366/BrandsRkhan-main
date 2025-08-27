@@ -7,16 +7,58 @@ const mongoose = require('mongoose');
 // Place a new order
 exports.placeOrder = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body;
+    const { orderItems, shippingAddress, paymentMethod, itemsPrice, shippingPrice, discount, totalPrice } = req.body;
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ error: 'No order items' });
     }
+
+    // Process offers for each item
+    const Offer = require('../models/Offer');
+    const processedItems = [];
+    let appliedOffer = null;
+    
+    for (const item of orderItems) {
+      if (item.offerId) {
+        const offer = await Offer.findById(item.offerId);
+        if (!offer) {
+          return res.status(400).json({ error: 'Invalid offer' });
+        }
+        
+        // Check offer validity
+        if (!offer.isValid()) {
+          return res.status(400).json({ error: 'Offer is no longer valid' });
+        }
+        
+        // Check per-user usage limit
+        const userRedemption = offer.redeemedBy.find(r => r.user.toString() === req.user._id.toString());
+        if (offer.usageLimit !== -1 && offer.usedCount >= offer.usageLimit) {
+          return res.status(400).json({ error: 'Offer usage limit reached' });
+        }
+        
+        // Increment usage count
+        offer.usedCount += 1;
+        if (userRedemption) {
+          userRedemption.count += 1;
+        } else {
+          offer.redeemedBy.push({ user: req.user._id, count: 1 });
+        }
+        await offer.save();
+        
+        if (!appliedOffer) appliedOffer = offer._id;
+      }
+      processedItems.push(item);
+    }
+
     const order = new Order({
       user: req.user._id,
-      orderItems,
+      orderItems: processedItems,
       shippingAddress,
       paymentMethod,
+      itemsPrice: itemsPrice || totalPrice,
+      shippingPrice: shippingPrice || 0,
+      discount: discount || 0,
       totalPrice,
+      appliedOffer,
     });
     const createdOrder = await order.save();
     
@@ -40,7 +82,9 @@ exports.placeOrder = async (req, res) => {
 // Get logged-in user's orders
 exports.getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user._id })
+      .populate('appliedOffer', 'name discountPercentage')
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -88,7 +132,9 @@ exports.getAllOrders = async (req, res) => {
 // Get order by ID
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate('appliedOffer', 'name discountPercentage');
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
@@ -167,7 +213,11 @@ exports.reorder = async (req, res) => {
       orderItems: oldOrder.orderItems,
       shippingAddress: oldOrder.shippingAddress,
       paymentMethod: oldOrder.paymentMethod,
+      itemsPrice: oldOrder.itemsPrice || oldOrder.totalPrice,
+      shippingPrice: oldOrder.shippingPrice || 0,
+      discount: oldOrder.discount || 0,
       totalPrice: oldOrder.totalPrice,
+      appliedOffer: oldOrder.appliedOffer,
     });
     await newOrder.save();
     

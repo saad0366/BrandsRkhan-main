@@ -32,12 +32,10 @@ export const getAllOffers = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await fetchAllOffers();
-      // Always return the data array, not the whole response object
-      return response.data?.data || response.data || [];
+      const data = response.data?.data || response.data || [];
+      return data;
     } catch (error) {
-      console.error('Error fetching all offers:', error);
-      // Return empty array instead of rejecting to prevent app crash
-      return [];
+      return rejectWithValue(error.response?.data?.error || 'Failed to fetch offers');
     }
   }
 );
@@ -48,9 +46,9 @@ export const createNewOffer = createAsyncThunk(
   async (offerData, { rejectWithValue }) => {
     try {
       const response = await createOffer(offerData);
-      return response;
+      return response.data || response;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create offer');
+      return rejectWithValue(error.response?.data?.error || error.message || 'Failed to create offer');
     }
   }
 );
@@ -61,9 +59,9 @@ export const updateExistingOffer = createAsyncThunk(
   async ({ id, offerData }, { rejectWithValue }) => {
     try {
       const response = await updateOffer(id, offerData);
-      return response;
+      return response.data || response;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update offer');
+      return rejectWithValue(error.response?.data?.error || error.message || 'Failed to update offer');
     }
   }
 );
@@ -151,7 +149,10 @@ const offerSlice = createSlice({
       })
       .addCase(getActiveOffers.fulfilled, (state, action) => {
         state.loading = false;
-        state.available = action.payload || [];
+        state.error = null;
+        // Handle the nested data structure from public API
+        const data = action.payload?.data || action.payload;
+        state.available = Array.isArray(data) ? data : [];
       })
       .addCase(getActiveOffers.rejected, (state, action) => {
         state.loading = false;
@@ -165,11 +166,13 @@ const offerSlice = createSlice({
       })
       .addCase(getAllOffers.fulfilled, (state, action) => {
         state.loading = false;
-        state.allOffers = action.payload || [];
+        state.error = null;
+        const data = action.payload;
+        state.allOffers = Array.isArray(data) ? data : [];
       })
       .addCase(getAllOffers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error?.message || 'Failed to fetch offers';
+        state.error = action.payload || action.error?.message || 'Failed to fetch offers';
         state.allOffers = [];
       })
       // Create Offer
@@ -179,8 +182,10 @@ const offerSlice = createSlice({
       })
       .addCase(createNewOffer.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
-          state.allOffers.push(action.payload);
+        state.error = null;
+        const newOffer = action.payload?.data || action.payload;
+        if (newOffer && newOffer._id) {
+          state.allOffers.push(newOffer);
         }
       })
       .addCase(createNewOffer.rejected, (state, action) => {
@@ -194,10 +199,12 @@ const offerSlice = createSlice({
       })
       .addCase(updateExistingOffer.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
-          const index = state.allOffers.findIndex(offer => offer._id === action.payload._id);
+        state.error = null;
+        const updatedOffer = action.payload?.data || action.payload;
+        if (updatedOffer && updatedOffer._id) {
+          const index = state.allOffers.findIndex(offer => offer._id === updatedOffer._id);
           if (index !== -1) {
-            state.allOffers[index] = action.payload;
+            state.allOffers[index] = updatedOffer;
           }
         }
       })

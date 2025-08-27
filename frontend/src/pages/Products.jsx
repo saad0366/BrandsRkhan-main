@@ -16,10 +16,12 @@ import {
 } from '@mui/material';
 import { FilterList, Close } from '@mui/icons-material';
 import { getProducts, setFilters, setPagination } from '../redux/slices/productSlice';
+import { getActiveOffers } from '../redux/slices/offerSlice';
 import ProductCard from '../components/product/ProductCard';
 import ProductFilters from '../components/product/ProductFilters';
 import ProductSort from '../components/product/ProductSort';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import OfferCard from '../components/offer/OfferCard';
 
 const Products = () => {
   const dispatch = useDispatch();
@@ -29,10 +31,12 @@ const Products = () => {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   const { items: products, loading, filters, pagination, error } = useSelector(state => state.products);
+  const { available: offers } = useSelector(state => state.offers);
 
-  // Load initial products on component mount
+  // Load initial products and offers on component mount
   useEffect(() => {
     dispatch(getProducts({ page: 1 }));
+    dispatch(getActiveOffers());
   }, [dispatch]);
 
   useEffect(() => {
@@ -115,6 +119,18 @@ const Products = () => {
         {/* Desktop Filters Sidebar */}
         {!isMobile && (
           <Box sx={{ width: 280, flexShrink: 0 }}>
+            {/* Active Offers */}
+            {offers && offers.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#FF6B6B' }}>
+                  🔥 Active Offers
+                </Typography>
+                {offers.slice(0, 2).map((offer) => (
+                  <OfferCard key={offer._id} offer={offer} />
+                ))}
+              </Box>
+            )}
+            
             <ProductFilters
               filters={filters}
               onFilterChange={handleFilterChange}

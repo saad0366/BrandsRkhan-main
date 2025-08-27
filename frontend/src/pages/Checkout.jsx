@@ -13,6 +13,7 @@ import {
   Button,
   Grid,
   Chip,
+  Alert,
 } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -24,6 +25,8 @@ import { clearUserCart } from '../redux/slices/cartSlice';
 import { useNavigate } from 'react-router-dom';
 import { getMyOrders } from '../redux/slices/orderSlice';
 import { getActiveOffers } from '../redux/slices/offerSlice';
+import CountdownTimer from '../components/common/CountdownTimer';
+import PayFastPayment from '../components/PayFastPayment';
 
 const Checkout = () => {
   const dispatch = useDispatch();
@@ -31,10 +34,73 @@ const Checkout = () => {
   const { available: offers } = useSelector(state => state.offers);
   const shipping = 10; // Flat shipping for now
   const navigate = useNavigate();
+  const [showPayFast, setShowPayFast] = React.useState(false);
+  const [paymentLoading, setPaymentLoading] = React.useState(false);
 
   useEffect(() => {
     dispatch(getActiveOffers());
   }, [dispatch]);
+
+
+
+  // Helper: get best applicable offer for a product
+  const getApplicableOffer = (item) => {
+    if (!offers || !Array.isArray(offers) || offers.length === 0) return null;
+    
+    const validOffers = offers.filter(offer => {
+      if (!offer || !offer.active) return false;
+      
+      const now = new Date();
+      if (now < new Date(offer.startDate) || now > new Date(offer.endDate)) return false;
+      
+      // If no restrictions, apply to all products
+      const hasProductRestrictions = offer.applicableProducts && offer.applicableProducts.length > 0;
+      const hasCategoryRestrictions = offer.applicableCategories && offer.applicableCategories.length > 0;
+      
+      if (!hasProductRestrictions && !hasCategoryRestrictions) {
+        return true; // Global offer
+      }
+      
+      // Check product restrictions
+      if (hasProductRestrictions && offer.applicableProducts.includes(item.product)) {
+        return true;
+      }
+      
+      // Check category restrictions
+      if (hasCategoryRestrictions && item.category && offer.applicableCategories.includes(item.category)) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    return validOffers.length > 0 ? validOffers.sort((a, b) => b.discountPercentage - a.discountPercentage)[0] : null;
+  };
+
+  // Helper: get discounted price for a cart item
+  const getDiscountedPrice = (item) => {
+    const offer = getApplicableOffer(item);
+    if (!offer) return item.price;
+    const discounted = item.price * (1 - offer.discountPercentage / 100);
+    return Math.max(0, discounted);
+  };
+
+  // Calculate totals
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  const totalDiscount = React.useMemo(() => {
+    return items.reduce((sum, item) => {
+      const offer = getApplicableOffer(item);
+      if (!offer) return sum;
+      const originalPrice = item.price;
+      const discountedPrice = originalPrice * (1 - offer.discountPercentage / 100);
+      const discount = (originalPrice - discountedPrice) * item.quantity;
+      return sum + discount;
+    }, 0);
+  }, [items, offers]);
+  
+  const discountedTotal = subtotal - totalDiscount;
+  const finalTotal = discountedTotal + shipping;
 
   const initialValues = {
     fullName: '',
@@ -56,27 +122,16 @@ const Checkout = () => {
     paymentMethod: Yup.string().required('Please select a payment method'),
   });
 
-  // Helper to get best applicable offer for a product
-  const getApplicableOffer = (product) => {
-    if (!offers || offers.length === 0) return null;
-    return offers
-      .filter(offer =>
-        (offer.applicableProducts && offer.applicableProducts.includes(product.product)) ||
-        (offer.applicableCategories && offer.applicableCategories.includes(product.category))
-      )
-      .sort((a, b) => b.discountPercentage - a.discountPercentage)[0] || null;
-  };
-
   const handlePlaceOrder = async (values) => {
+    if (values.paymentMethod === 'payfast') {
+      setShowPayFast(true);
+      return;
+    }
+    
     try {
-      // Calculate offer discount for each item
-      let offerDiscount = 0;
       const orderItems = items.map(item => {
         const offer = getApplicableOffer(item);
-        const discountedPrice = offer ? item.price * (1 - offer.discountPercentage / 100) : item.price;
-        if (offer) {
-          offerDiscount += (item.price - discountedPrice) * item.quantity;
-        }
+        const discountedPrice = getDiscountedPrice(item);
         return {
           product: item.product,
           name: item.name,
@@ -84,9 +139,9 @@ const Checkout = () => {
           price: item.price,
           image: item.image,
           discountedPrice,
+          offerId: offer ? offer._id : null,
         };
       });
-      const finalTotal = totalPrice + shipping - offerDiscount;
       const orderData = {
         orderItems,
         shippingAddress: {
@@ -96,9 +151,9 @@ const Checkout = () => {
           country: values.country,
         },
         paymentMethod: values.paymentMethod,
-        itemsPrice: totalPrice,
+        itemsPrice: subtotal,
         shippingPrice: shipping,
-        discount: offerDiscount,
+        discount: totalDiscount,
         totalPrice: finalTotal,
       };
       await dispatch(createOrder(orderData)).unwrap();
@@ -108,6 +163,54 @@ const Checkout = () => {
       navigate('/orders');
     } catch (error) {
       toast.error(error || 'Failed to place order');
+    }
+  };
+
+  const handlePayFastPayment = async (cardDetails) => {
+    setPaymentLoading(true);
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const orderItems = items.map(item => {
+        const offer = getApplicableOffer(item);
+        const discountedPrice = getDiscountedPrice(item);
+        return {
+          product: item.product,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image,
+          discountedPrice,
+          offerId: offer ? offer._id : null,
+        };
+      });
+      
+      const orderData = {
+        orderItems,
+        shippingAddress: {
+          address: 'PayFast Address',
+          city: 'PayFast City',
+          postalCode: '12345',
+          country: 'South Africa',
+        },
+        paymentMethod: 'payfast',
+        itemsPrice: subtotal,
+        shippingPrice: shipping,
+        discount: totalDiscount,
+        totalPrice: finalTotal,
+        paymentDetails: cardDetails,
+      };
+      
+      await dispatch(createOrder(orderData)).unwrap();
+      await dispatch(clearUserCart());
+      toast.success('Payment successful! Order placed.');
+      navigate('/orders');
+    } catch (error) {
+      toast.error('Payment failed. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+      setShowPayFast(false);
     }
   };
 
@@ -228,10 +331,17 @@ const Checkout = () => {
               <Typography variant="h6" gutterBottom>
                 Order Summary
               </Typography>
+              {totalDiscount > 0 && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    🎉 You're saving {formatCurrency(totalDiscount)} with applied offers!
+                  </Typography>
+                </Alert>
+              )}
               <Grid container spacing={2}>
                 {items.map((item, idx) => {
                   const offer = getApplicableOffer(item);
-                  const discountedPrice = offer ? item.price * (1 - offer.discountPercentage / 100) : item.price;
+                  const discountedPrice = getDiscountedPrice(item);
                   return (
                     <Grid item xs={12} key={item.product}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -240,20 +350,16 @@ const Checkout = () => {
                           <Typography variant="caption" color="text.secondary">Qty: {item.quantity}</Typography>
                         </Box>
                         <Box sx={{ textAlign: 'right' }}>
-                          {offer ? (
-                            <>
+                          <Typography variant="h6" fontWeight={600}>
+                            {formatCurrency((offer ? discountedPrice : item.price) * item.quantity)}
+                          </Typography>
+                          {offer && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
                               <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
-                                {formatCurrency(item.price)}
+                                {formatCurrency(item.price * item.quantity)}
                               </Typography>
-                              <Typography variant="h6" color="success.main" fontWeight={700}>
-                                {formatCurrency(discountedPrice)}
-                              </Typography>
-                              <Chip label={`-${offer.discountPercentage}%`} color="success" size="small" sx={{ ml: 1 }} />
-                            </>
-                          ) : (
-                            <Typography variant="h6" color="primary" fontWeight={700}>
-                              {formatCurrency(item.price)}
-                            </Typography>
+                              <Chip label={`${offer.discountPercentage}% OFF`} color="success" size="small" />
+                            </Box>
                           )}
                         </Box>
                       </Box>
@@ -264,12 +370,14 @@ const Checkout = () => {
               <Divider sx={{ my: 2 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="body2">Subtotal</Typography>
-                <Typography variant="body2">{formatCurrency(totalPrice)}</Typography>
+                <Typography variant="body2">{formatCurrency(discountedTotal)}</Typography>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2">Discount</Typography>
-                <Typography variant="body2" color="success.main">- {formatCurrency(offerDiscount)}</Typography>
-              </Box>
+              {totalDiscount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="success.main">Discount Applied</Typography>
+                  <Typography variant="body2" color="success.main">-{formatCurrency(totalDiscount)}</Typography>
+                </Box>
+              )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="body2">Shipping</Typography>
                 <Typography variant="body2">{formatCurrency(shipping)}</Typography>
@@ -277,7 +385,7 @@ const Checkout = () => {
               <Divider sx={{ my: 2 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
                 <Typography variant="h6">Total</Typography>
-                <Typography variant="h6">{formatCurrency(totalPrice + shipping - offerDiscount)}</Typography>
+                <Typography variant="h6">{formatCurrency(finalTotal)}</Typography>
               </Box>
             </Paper>
 
@@ -287,6 +395,26 @@ const Checkout = () => {
           </Form>
         )}
       </Formik>
+      
+      {showPayFast && (
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box sx={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}>
+            <Button 
+              onClick={() => setShowPayFast(false)}
+              sx={{ position: 'absolute', top: 10, right: 10, zIndex: 10000, minWidth: 'auto', p: 1 }}
+            >
+              ✕
+            </Button>
+            <PayFastPayment 
+              orderTotal={finalTotal}
+              originalTotal={subtotal + shipping}
+              discount={totalDiscount}
+              onPaymentSubmit={handlePayFastPayment}
+              loading={paymentLoading}
+            />
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 };

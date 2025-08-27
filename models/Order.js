@@ -5,6 +5,8 @@ const orderItemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   image: { type: String },
   price: { type: Number, required: true },
+  discountedPrice: { type: Number },
+  offerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer' },
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
@@ -29,11 +31,25 @@ const orderSchema = new mongoose.Schema(
     orderItems: [orderItemSchema],
     shippingAddress: shippingAddressSchema,
     paymentMethod: { type: String, required: true },
+    itemsPrice: { type: Number, required: true },
+    shippingPrice: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
     totalPrice: { type: Number, required: true },
     isPaid: { type: Boolean, default: false },
     paidAt: { type: Date },
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
+    status: { 
+      type: String, 
+      enum: ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'], 
+      default: 'pending' 
+    },
+    // Add appliedOffer field
+    appliedOffer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Offer',
+      default: null
+    },
   },
   { timestamps: true }
 );

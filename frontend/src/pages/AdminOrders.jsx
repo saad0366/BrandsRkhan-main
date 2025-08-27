@@ -26,7 +26,8 @@ import MuiAlert from '@mui/material/Alert';
 
 const getStatusChip = (order) => {
   if (order.status === 'cancelled') return <Chip label="Cancelled" color="error" size="small" />;
-  if (order.isPaid) return <Chip label="Paid" color="success" size="small" />;
+  if (order.isDelivered) return <Chip label="Delivered" color="success" size="small" />;
+  if (order.isPaid) return <Chip label="Paid" color="info" size="small" />;
   return <Chip label="Pending" color="warning" size="small" />;
 };
 

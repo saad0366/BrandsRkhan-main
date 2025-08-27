@@ -55,7 +55,12 @@ const offerSchema = new mongoose.Schema({
   usedCount: {
     type: Number,
     default: 0
-  }
+  },
+  // Add redeemedBy array for per-user usage tracking
+  redeemedBy: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    count: { type: Number, default: 1 }
+  }]
 }, {
   timestamps: true
 });

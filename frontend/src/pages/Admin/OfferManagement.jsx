@@ -45,6 +45,7 @@ import {
 import { toast } from 'react-toastify';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 import { 
   getAllOffers, 
   createNewOffer, 
@@ -53,6 +54,7 @@ import {
   clearError 
 } from '../../redux/slices/offerSlice';
 import { getProducts } from '../../redux/slices/productSlice';
+import axios from 'axios';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Offer name is required'),
@@ -70,6 +72,8 @@ const validationSchema = Yup.object({
 const OfferManagement = () => {
   const dispatch = useDispatch();
   const { allOffers, loading, error } = useSelector(state => state.offers);
+  
+
   const { items: products } = useSelector(state => state.products);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState(null);
@@ -79,21 +83,35 @@ const OfferManagement = () => {
   const [applicableProducts, setApplicableProducts] = useState([]);
   const [applicableCategories, setApplicableCategories] = useState([]);
 
+
   useEffect(() => {
+    dispatch(clearError());
     dispatch(getAllOffers());
     dispatch(getProducts({ limit: 1000 }));
+  }, [dispatch]);
+
+  // Clear error when component unmounts
+  useEffect(() => {
     return () => {
       dispatch(clearError());
     };
   }, [dispatch]);
 
+
+
   const handleCreateOffer = () => {
     setEditingOffer(null);
+    setApplicableProducts([]);
+    setApplicableCategories([]);
+    setBannerImage(null);
     setDialogOpen(true);
   };
 
   const handleEditOffer = (offer) => {
     setEditingOffer(offer);
+    setApplicableProducts(offer.applicableProducts || []);
+    setApplicableCategories(offer.applicableCategories || []);
+    setBannerImage(null);
     setDialogOpen(true);
   };
 
@@ -104,22 +122,55 @@ const OfferManagement = () => {
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
+      // Clear any existing errors
+      dispatch(clearError());
+      
       const formData = new FormData();
+      
+      // Add basic form values
       Object.entries(values).forEach(([key, value]) => {
-        formData.append(key, value);
+        if (value !== null && value !== undefined && value !== '') {
+          formData.append(key, value);
+        }
       });
+      
+      // Add banner image if provided
       if (bannerImage) {
         formData.append('bannerImage', bannerImage);
       }
-      applicableProducts.forEach(id => formData.append('applicableProducts', id));
-      applicableCategories.forEach(cat => formData.append('applicableCategories', cat));
+      
+      // Add applicable products
+      if (applicableProducts.length > 0) {
+        applicableProducts.forEach(id => formData.append('applicableProducts', id));
+      }
+      
+      // Add applicable categories
+      if (applicableCategories.length > 0) {
+        applicableCategories.forEach(cat => formData.append('applicableCategories', cat));
+      }
+      
+      // Set default values for optional fields
+      if (!formData.has('minimumPurchaseAmount')) {
+        formData.append('minimumPurchaseAmount', '0');
+      }
+      if (!formData.has('usageLimit')) {
+        formData.append('usageLimit', '-1');
+      }
+      
+      let result;
       if (editingOffer) {
-        await dispatch(updateExistingOffer({ id: editingOffer._id, offerData: formData })).unwrap();
+        result = await dispatch(updateExistingOffer({ id: editingOffer._id, offerData: formData })).unwrap();
         toast.success('Offer updated successfully!');
       } else {
-        await dispatch(createNewOffer(formData)).unwrap();
+        result = await dispatch(createNewOffer(formData)).unwrap();
         toast.success('Offer created successfully!');
       }
+      
+      // Only refresh if the operation was successful
+      if (result) {
+        dispatch(getAllOffers());
+      }
+      
       setDialogOpen(false);
       resetForm();
       setEditingOffer(null);
@@ -127,7 +178,9 @@ const OfferManagement = () => {
       setApplicableProducts([]);
       setApplicableCategories([]);
     } catch (error) {
-      toast.error(error || 'Failed to save offer');
+      console.error('Offer submission error:', error);
+      const errorMessage = typeof error === 'string' ? error : error?.message || 'Failed to save offer';
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -137,6 +190,7 @@ const OfferManagement = () => {
     try {
       await dispatch(deleteExistingOffer(offerToDelete._id)).unwrap();
       toast.success('Offer deleted successfully!');
+      dispatch(getAllOffers()); // Refresh list
       setDeleteDialogOpen(false);
       setOfferToDelete(null);
     } catch (error) {
@@ -200,6 +254,7 @@ const OfferManagement = () => {
   }
 
   return (
+    <ErrorBoundary>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom>
@@ -209,6 +264,7 @@ const OfferManagement = () => {
           Create and manage promotional offers for your products.
         </Typography>
       </Box>
+
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -291,13 +347,17 @@ const OfferManagement = () => {
       {/* Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">All Offers</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleCreateOffer}
-        >
-          Create New Offer
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleCreateOffer}
+          >
+            Create New Offer
+          </Button>
+        </Box>
       </Box>
 
       {/* Offers Table */}
@@ -316,11 +376,20 @@ const OfferManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {allOffers.length === 0 ? (
+              {!loading && allOffers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <Typography variant="body1" color="text.secondary">
                       No offers found. Create your first offer to get started.
+                    </Typography>
+
+                  </TableCell>
+                </TableRow>
+              ) : loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      Loading offers...
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -331,10 +400,16 @@ const OfferManagement = () => {
                       <Typography variant="body2" fontWeight={500}>
                         {offer.name}
                       </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ID: {offer._id?.slice(-8)}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ maxWidth: 200 }}>
                         {offer.description}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Products: {offer.applicableProducts?.length || 0} | Categories: {offer.applicableCategories?.length || 0}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -503,19 +578,20 @@ const OfferManagement = () => {
                       <Select
                         labelId="applicable-products-label"
                         multiple
-                        value={applicableProducts}
-                        onChange={e => setApplicableProducts(e.target.value)}
+                        value={Array.isArray(applicableProducts) ? applicableProducts : []}
+                        onChange={e => setApplicableProducts(Array.isArray(e.target.value) ? e.target.value : [])}
                         input={<OutlinedInput label="Applicable Products" />}
-                        renderValue={selected =>
-                          selected.map(id => {
+                        renderValue={selected => {
+                          if (!Array.isArray(selected)) return '';
+                          return selected.map(id => {
                             const prod = products.find(p => p._id === id);
                             return prod ? prod.name : id;
-                          }).join(', ')
-                        }
+                          }).join(', ');
+                        }}
                       >
                         {products.map(product => (
                           <MenuItem key={product._id} value={product._id}>
-                            <Checkbox checked={applicableProducts.indexOf(product._id) > -1} />
+                            <Checkbox checked={Array.isArray(applicableProducts) && applicableProducts.indexOf(product._id) > -1} />
                             <ListItemText primary={product.name} />
                           </MenuItem>
                         ))}
@@ -528,14 +604,17 @@ const OfferManagement = () => {
                       <Select
                         labelId="applicable-categories-label"
                         multiple
-                        value={applicableCategories}
-                        onChange={e => setApplicableCategories(e.target.value)}
+                        value={Array.isArray(applicableCategories) ? applicableCategories : []}
+                        onChange={e => setApplicableCategories(Array.isArray(e.target.value) ? e.target.value : [])}
                         input={<OutlinedInput label="Applicable Categories" />}
-                        renderValue={selected => selected.join(', ')}
+                        renderValue={selected => {
+                          if (!Array.isArray(selected)) return '';
+                          return selected.join(', ');
+                        }}
                       >
                         {categories.map(category => (
                           <MenuItem key={category} value={category}>
-                            <Checkbox checked={applicableCategories.indexOf(category) > -1} />
+                            <Checkbox checked={Array.isArray(applicableCategories) && applicableCategories.indexOf(category) > -1} />
                             <ListItemText primary={category} />
                           </MenuItem>
                         ))}
@@ -543,6 +622,28 @@ const OfferManagement = () => {
                     </FormControl>
                   </Grid>
                 </Grid>
+                {/* Offer Preview Section */}
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                    Offer Preview
+                  </Typography>
+                  <Card sx={{ maxWidth: 400, background: 'linear-gradient(135deg, #00fff0 0%, #a020f0 100%)', color: '#fff', boxShadow: 3 }}>
+                    <CardContent>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {values.name || 'Offer Name'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        {values.description || 'Offer description will appear here.'}
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#FFD700', mb: 1 }}>
+                        {values.discountPercentage ? `${values.discountPercentage}% OFF` : 'Discount %'}
+                      </Typography>
+                      <Typography variant="body2">
+                        Valid: {values.startDate || 'Start Date'} - {values.endDate || 'End Date'}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
               </DialogContent>
               <DialogActions>
                 <Button onClick={() => setDialogOpen(false)}>
@@ -575,7 +676,8 @@ const OfferManagement = () => {
         </DialogActions>
       </Dialog>
     </Container>
+    </ErrorBoundary>
   );
 };
 
-export default OfferManagement; 
+export default OfferManagement;

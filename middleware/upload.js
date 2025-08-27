@@ -23,12 +23,24 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only image files are allowed!'));
 };
 
-const upload = multer({
+// Create base multer upload instance
+const uploadConfig = {
   storage: storage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB max file size
   }
-});
+};
 
-module.exports = upload; 
+// Create multer instance
+const upload = multer(uploadConfig);
+
+// Export a more flexible upload object with different field configurations
+module.exports = {
+  single: (fieldName) => upload.single(fieldName),
+  array: (fieldName, maxCount) => upload.array(fieldName, maxCount),
+  fields: (fields) => upload.fields(fields),
+  any: () => upload.any(),
+  // Default export for backward compatibility
+  ...upload
+};

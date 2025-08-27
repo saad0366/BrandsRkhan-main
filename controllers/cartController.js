@@ -1,12 +1,138 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const Offer = require('../models/Offer');
+const mongoose = require('mongoose');
+
+// @desc    Apply offer to cart
+// @route   POST /api/v1/cart/apply-offer
+// @access  Private
+exports.applyOffer = async (req, res) => {
+  try {
+    const { offerId } = req.body;
+
+    if (!offerId || !mongoose.Types.ObjectId.isValid(offerId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid offer ID'
+      });
+    }
+
+    // Find cart
+    let cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cart not found'
+      });
+    }
+
+    // Find offer
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Offer not found'
+      });
+    }
+
+    // Validate offer
+    if (!offer.active || new Date() < offer.startDate || new Date() > offer.endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Offer is not active or has expired'
+      });
+    }
+
+    // Calculate cart subtotal
+    const subtotal = cart.items.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+
+    // Check minimum purchase amount
+    if (offer.minimumPurchaseAmount && subtotal < offer.minimumPurchaseAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `Minimum purchase amount of $${offer.minimumPurchaseAmount} required`
+      });
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+    if (offer.discountPercentage) {
+      discountAmount = (subtotal * offer.discountPercentage) / 100;
+      
+      // Apply maximum discount if set
+      if (offer.maximumDiscountAmount && discountAmount > offer.maximumDiscountAmount) {
+        discountAmount = offer.maximumDiscountAmount;
+      }
+    }
+
+    // Update cart with offer
+    cart.appliedOffer = offer._id;
+    cart.discountAmount = discountAmount;
+    cart.subtotalPrice = subtotal;
+    cart.totalPrice = subtotal - discountAmount;
+    
+    await cart.save();
+
+    res.status(200).json({
+      success: true,
+      data: cart,
+      message: `Offer applied successfully! You saved $${discountAmount.toFixed(2)}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// @desc    Remove offer from cart
+// @route   DELETE /api/v1/cart/remove-offer
+// @access  Private
+exports.removeOffer = async (req, res) => {
+  try {
+    // Find cart
+    let cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cart not found'
+      });
+    }
+
+    // Remove offer
+    cart.appliedOffer = null;
+    cart.discountAmount = 0;
+    
+    // Recalculate totals
+    cart.subtotalPrice = cart.items.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+    cart.totalPrice = cart.subtotalPrice;
+    
+    await cart.save();
+
+    res.status(200).json({
+      success: true,
+      data: cart
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
 
 // @desc    Get user cart
 // @route   GET /api/v1/cart
 // @access  Private
 exports.getCart = async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.user._id });
+    let cart = await Cart.findOne({ user: req.user._id })
+      .populate('appliedOffer', 'name discountPercentage');
 
     if (!cart) {
       cart = await Cart.create({
@@ -14,6 +140,16 @@ exports.getCart = async (req, res) => {
         items: [],
         totalPrice: 0
       });
+    }
+
+    // Populate product categories for offer matching
+    if (cart.items && cart.items.length > 0) {
+      for (let item of cart.items) {
+        const product = await Product.findById(item.product).select('category');
+        if (product) {
+          item.category = product.category;
+        }
+      }
     }
 
     res.status(200).json({
@@ -55,7 +191,8 @@ exports.addToCart = async (req, res) => {
           name: product.name,
           quantity,
           price: product.price,
-          image: product.images[0]
+          image: product.images[0],
+          category: product.category
         }]
       });
     } else {
@@ -92,7 +229,8 @@ exports.addToCart = async (req, res) => {
           name: product.name,
           quantity,
           price: product.price,
-          image: product.images[0]
+          image: product.images[0],
+          category: product.category
         });
       }
 
@@ -220,4 +358,4 @@ exports.clearCart = async (req, res) => {
       error: error.message
     });
   }
-}; 
+};

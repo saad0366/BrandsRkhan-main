@@ -16,9 +16,12 @@ export const checkAuthStatus = createAsyncThunk(
         throw new Error('No token found');
       }
       const response = await getCurrentUser();
+      // Store user data in localStorage for access by axios interceptors
+      localStorage.setItem('user', JSON.stringify(response.data.data));
       return response.data;
     } catch (error) {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       return rejectWithValue(error.response?.data || { message: 'Authentication failed' });
   }
   }
@@ -30,6 +33,8 @@ export const login = createAsyncThunk(
     try {
       const response = await loginUser(credentials);
       localStorage.setItem('token', response.data.token);
+      // Store user info in localStorage for access by axios interceptors
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: 'Login failed' });
@@ -72,6 +77,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   
   // Always clear local storage
   localStorage.removeItem('token');
+  localStorage.removeItem('user');
   return { success: true };
 });
 

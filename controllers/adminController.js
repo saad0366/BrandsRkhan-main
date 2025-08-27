@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Offer = require('../models/Offer');
+const { sendEmail } = require('../utils/sendEmail');
 
 // @desc    Get admin dashboard stats
 // @route   GET /api/v1/admin/stats
@@ -237,14 +238,14 @@ exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    if (!['processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+    if (!['paid', 'delivered', 'processing', 'shipped', 'cancelled'].includes(status)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid status'
       });
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
 
     if (!order) {
       return res.status(404).json({
@@ -253,13 +254,41 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    order.status = status;
+    // Handle paid status
+    if (status === 'paid') {
+      order.isPaid = true;
+      order.paidAt = new Date();
+    }
+    
+    // Handle delivered status
     if (status === 'delivered') {
       order.isDelivered = true;
-      order.deliveredAt = Date.now();
+      order.deliveredAt = new Date();
     }
+    
+    // Update general status
+    order.status = status;
 
     await order.save();
+
+    // Send email notification to user
+    try {
+      let emailSubject = 'Order Status Updated';
+      let emailMessage = `Your order #${order._id.toString().slice(-8).toUpperCase()} status has been updated to ${status}.`;
+      
+      if (status === 'paid') {
+        emailSubject = 'Payment Confirmed';
+        emailMessage = `Great news! Your payment for order #${order._id.toString().slice(-8).toUpperCase()} has been confirmed. Your order is now being processed.`;
+      } else if (status === 'delivered') {
+        emailSubject = 'Order Delivered';
+        emailMessage = `Your order #${order._id.toString().slice(-8).toUpperCase()} has been delivered! We hope you enjoy your purchase.`;
+      }
+      
+      await sendEmail(order.user.email, emailSubject, emailMessage);
+    } catch (emailError) {
+      console.error('Error sending status update email:', emailError);
+      // Don't fail the status update if email fails
+    }
 
     res.status(200).json({
       success: true,

@@ -19,7 +19,7 @@ export const reorder = (id) =>
   axiosClient.post(`/orders/${id}/reorder`);
 
 export const updateOrderStatus = (id, status) =>
-  axiosClient.patch(`/orders/${id}/status`, { status });
+  axiosClient.put(`/admin/orders/${id}/status`, { status });
 
 export const fetchOrderStats = () =>
   axiosClient.get('/orders/stats'); 

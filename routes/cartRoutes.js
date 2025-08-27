@@ -5,7 +5,9 @@ const {
   addToCart,
   removeFromCart,
   updateCartItem,
-  clearCart
+  clearCart,
+  applyOffer,
+  removeOffer
 } = require('../controllers/cartController');
 const { protect } = require('../middleware/auth');
 
@@ -20,4 +22,8 @@ router.route('/:productId')
   .delete(removeFromCart)
   .put(updateCartItem);
 
-module.exports = router; 
+// Offer routes
+router.post('/apply-offer', applyOffer);
+router.delete('/remove-offer', removeOffer);
+
+module.exports = router;

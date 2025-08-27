@@ -37,6 +37,7 @@ import { getActiveOffers } from '../redux/slices/offerSlice';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { formatCurrency, getStockStatus } from '../utils/formatters';
 import { toast } from 'react-toastify';
+import { getApplicableOffer, getDiscountedPrice } from '../utils/discounts';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -89,12 +90,8 @@ const ProductDetail = () => {
   const stockStatus = getStockStatus(product.stock);
 
   // Find the best applicable offer for this product
-  const applicableOffer = offers && offers.length > 0
-    ? offers.filter(offer =>
-        (offer.applicableProducts && offer.applicableProducts.includes(product._id)) ||
-        (offer.applicableCategories && offer.applicableCategories.includes(product.category))
-      ).sort((a, b) => b.discountPercentage - a.discountPercentage)[0]
-    : null;
+  const applicableOffer = getApplicableOffer(product, offers);
+  const discountedPrice = getDiscountedPrice(product, offers);
 
   const handleAddToCart = async () => {
     console.log('Add to Cart clicked', product);
@@ -232,18 +229,18 @@ const ProductDetail = () => {
                     {formatCurrency(product.price)}
                   </Typography>
                   <Typography variant="h3" color="success.main" sx={{ fontWeight: 700, mb: 1 }}>
-                    {formatCurrency(product.price * (1 - applicableOffer.discountPercentage / 100))}
+                    {formatCurrency(discountedPrice)}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <LocalOffer color="success" />
                     <Chip
-                      label={`${applicableOffer.discountPercentage}% OFF`}
+                      label={`${applicableOffer.discountPercentage}% OFF${applicableOffer.name ? ' - ' + applicableOffer.name : ''}`}
                       color="success"
                       size="small"
                     />
                   </Box>
                   <Typography variant="body2" color="success.main">
-                    Save {formatCurrency(product.price * applicableOffer.discountPercentage / 100)} with this offer!
+                    Save {formatCurrency(product.price - discountedPrice)} with this offer!
                   </Typography>
                 </Box>
               ) : (

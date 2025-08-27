@@ -17,6 +17,7 @@ import { ShoppingCart, Favorite, FavoriteBorder, Watch, LocalOffer } from '@mui/
 import { addItemToCart, fetchCart } from '../../redux/slices/cartSlice';
 import { formatCurrency, getStockStatus } from '../../utils/formatters';
 import { toast } from 'react-toastify';
+import CountdownTimer from '../common/CountdownTimer';
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
@@ -28,13 +29,48 @@ const ProductCard = ({ product }) => {
 
   const stockStatus = getStockStatus(product.stock);
 
+
+
   // Find the best applicable offer for this product
-  const applicableOffer = offers && offers.length > 0
-    ? offers.filter(offer =>
-        (offer.applicableProducts && offer.applicableProducts.includes(product._id)) ||
-        (offer.applicableCategories && offer.applicableCategories.includes(product.category))
-      ).sort((a, b) => b.discountPercentage - a.discountPercentage)[0]
-    : null;
+  const applicableOffer = React.useMemo(() => {
+    try {
+      if (!offers || !Array.isArray(offers) || offers.length === 0) {
+        return null;
+      }
+      
+      const validOffers = offers.filter(offer => {
+        try {
+          if (!offer || !offer.active) return false;
+          const now = new Date();
+          if (now < new Date(offer.startDate) || now > new Date(offer.endDate)) return false;
+          
+          // Check if product is specifically included
+          if (offer.applicableProducts && Array.isArray(offer.applicableProducts) && offer.applicableProducts.length > 0) {
+            return offer.applicableProducts.includes(product._id);
+          }
+          
+          // Check if category is included
+          if (offer.applicableCategories && Array.isArray(offer.applicableCategories) && offer.applicableCategories.length > 0) {
+            return offer.applicableCategories.includes(product.category);
+          }
+          
+          // If no specific products or categories, offer applies to all
+          return (!offer.applicableProducts || offer.applicableProducts.length === 0) && 
+                 (!offer.applicableCategories || offer.applicableCategories.length === 0);
+        } catch (error) {
+          console.warn('Error processing offer:', error);
+          return false;
+        }
+      });
+      
+      if (validOffers.length === 0) return null;
+      
+      return validOffers.sort((a, b) => (b.discountPercentage || 0) - (a.discountPercentage || 0))[0];
+    } catch (error) {
+      console.warn('Error finding applicable offer:', error);
+      return null;
+    }
+  }, [offers, product._id, product.category]);
 
   const handleAddToCart = async (e) => {
     console.log('Add to Cart clicked', product);
@@ -156,13 +192,40 @@ const ProductCard = ({ product }) => {
           )}
         </IconButton>
         
+        {/* Offer Tag - Most Prominent */}
+        {applicableOffer && (
+          <Chip
+            label={`${applicableOffer.discountPercentage}% OFF`}
+            size="small"
+            icon={<LocalOffer />}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              boxShadow: '0 4px 12px rgba(255, 107, 107, 0.4)',
+              border: 'none',
+              zIndex: 2,
+              animation: 'pulse 2s infinite',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' },
+              },
+            }}
+          />
+        )}
+        
         {product.stock === 0 && (
           <Chip
             label="Out of Stock"
             size="small"
             sx={{
               position: 'absolute',
-              top: 8,
+              top: applicableOffer ? 48 : 8,
               left: 8,
               background: 'rgba(255, 0, 102, 0.2)',
               borderColor: 'rgba(255, 0, 102, 0.4)',
@@ -251,6 +314,16 @@ const ProductCard = ({ product }) => {
                 >
                   {formatCurrency(product.price * (1 - applicableOffer.discountPercentage / 100))}
                 </Typography>
+                {/* You saved X% message */}
+                <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>
+                  You saved {Math.round(applicableOffer.discountPercentage)}%!
+                </Typography>
+                {/* Countdown timer */}
+                {applicableOffer.endDate && (
+                  <Box sx={{ mt: 0.5 }}>
+                    <CountdownTimer endDate={applicableOffer.endDate} />
+                  </Box>
+                )}
               </Box>
             ) : (
               <Typography 

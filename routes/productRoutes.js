@@ -15,8 +15,8 @@ router.get('/', getProducts);
 router.get('/:id', getProduct);
 
 // Protected routes (admin only)
-router.post('/', protect, authorize('admin'), upload.array('images', 5), createProduct);
-router.put('/:id', protect, authorize('admin'), upload.array('images', 5), updateProduct);
+router.post('/', protect, authorize('admin'), upload.any(), createProduct);
+router.put('/:id', protect, authorize('admin'), upload.any(), updateProduct);
 router.delete('/:id', protect, authorize('admin'), deleteProduct);
 
-module.exports = router; 
+module.exports = router;

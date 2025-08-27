@@ -102,12 +102,17 @@ exports.createProduct = async (req, res) => {
     const images = [];
 
     // Upload images to cloudinary
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(file.path);
-        images.push(result.secure_url);
-        // Remove file from uploads folder
-        fs.unlinkSync(file.path);
+    if (req.files) {
+      // Handle both array and any upload formats
+      const filesToProcess = Array.isArray(req.files) ? req.files : Object.values(req.files).flat();
+      
+      if (filesToProcess && filesToProcess.length > 0) {
+        for (const file of filesToProcess) {
+          const result = await cloudinary.uploader.upload(file.path);
+          images.push(result.secure_url);
+          // Remove file from uploads folder
+          fs.unlinkSync(file.path);
+        }
       }
     }
 
@@ -149,14 +154,19 @@ exports.updateProduct = async (req, res) => {
     }
 
     // Upload new images if provided
-    if (req.files && req.files.length > 0) {
-      const images = [];
-      for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(file.path);
-        images.push(result.secure_url);
-        fs.unlinkSync(file.path);
+    if (req.files) {
+      // Handle both array and any upload formats
+      const filesToProcess = Array.isArray(req.files) ? req.files : Object.values(req.files).flat();
+      
+      if (filesToProcess && filesToProcess.length > 0) {
+        const images = [];
+        for (const file of filesToProcess) {
+          const result = await cloudinary.uploader.upload(file.path);
+          images.push(result.secure_url);
+          fs.unlinkSync(file.path);
+        }
+        product.images = images;
       }
-      product.images = images;
     }
 
     // Update other fields
@@ -214,4 +224,4 @@ exports.deleteProduct = async (req, res) => {
       error: error.message
     });
   }
-}; 
+};

@@ -26,4 +26,19 @@ router.put('/users/:id/ban', toggleUserBan);
 router.get('/orders', getOrders);
 router.put('/orders/:id/status', updateOrderStatus);
 
+// Offer management
+const { 
+  getOffers: getAllOffers, 
+  createOffer, 
+  updateOffer, 
+  deleteOffer, 
+  getOfferAnalytics 
+} = require('../controllers/offerController');
+const upload = require('../middleware/upload');
+
+router.get('/offers', getAllOffers);
+router.post('/offers', upload.any(), createOffer);
+router.put('/offers/:id', upload.any(), updateOffer);
+router.delete('/offers/:id', deleteOffer);
+
 module.exports = router; 
