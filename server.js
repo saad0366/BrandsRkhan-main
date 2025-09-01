@@ -76,27 +76,22 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Test the server at: http://localhost:${PORT}/test`);
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Test the server at: http://localhost:${PORT}/test`);
+  // Schedule invoice cleanup (run daily at 2 AM)
+  setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 2 && now.getMinutes() === 0) {
+      console.log('Running scheduled invoice cleanup...');
+      cleanupOldInvoices(); // Uses default from config
+    }
+  }, 60000); // Check every minute
 
-    // Schedule invoice cleanup (run daily at 2 AM)
-    setInterval(() => {
-      const now = new Date();
-      if (now.getHours() === 2 && now.getMinutes() === 0) {
-        console.log('Running scheduled invoice cleanup...');
-        cleanupOldInvoices(); // Uses default from config
-      }
-    }, 60000); // Check every minute
-
-    // Schedule offer automation (run every hour)
-    setInterval(() => {
-      console.log('Running scheduled offer automation...');
-      runOfferAutomation().catch(err => console.error('Offer automation error:', err));
-    }, 60 * 60 * 1000); // Every hour
-  });
-}
-
-module.exports = app;
+  // Schedule offer automation (run every hour)
+  setInterval(() => {
+    console.log('Running scheduled offer automation...');
+    runOfferAutomation().catch(err => console.error('Offer automation error:', err));
+  }, 60 * 60 * 1000); // Every hour
+});
