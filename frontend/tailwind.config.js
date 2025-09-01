@@ -9,7 +9,7 @@ export default {
         'cyber-dark': '#1a1a1a',
         'electric-blue': '#00FFFF',
         'electric-blue-light': '#4DFFFF',
-        'electric-blue-dark': '#00B3B3',
+        'electric-blue-dark': '#00B3B3', 
         'purple-neon': '#a020f0',
         'purple-neon-light': '#b44df0',
         'purple-neon-dark': '#7a1bb3',
