@@ -2,10 +2,10 @@
 nixPkgs = ['nodejs_18']
 
 [phases.install]
-cmds = ['npm install']
+cmds = ['rm -f package-lock.json', 'npm install --no-package-lock']
 
 [phases.build]
-cmds = ['echo "No build step required"']
+cmds = ['echo "Build complete"']
 
 [start]
 cmd = 'npm start'
