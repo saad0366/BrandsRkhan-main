@@ -52,7 +52,7 @@ exports.applyOffer = async (req, res) => {
     if (offer.minimumPurchaseAmount && subtotal < offer.minimumPurchaseAmount) {
       return res.status(400).json({
         success: false,
-        error: `Minimum purchase amount of $${offer.minimumPurchaseAmount} required`
+        error: `Minimum purchase amount of PKR ${offer.minimumPurchaseAmount} required`
       });
     }
 
@@ -78,7 +78,7 @@ exports.applyOffer = async (req, res) => {
     res.status(200).json({
       success: true,
       data: cart,
-      message: `Offer applied successfully! You saved $${discountAmount.toFixed(2)}`
+      message: `Offer applied successfully! You saved PKR ${discountAmount.toFixed(0)}`
     });
   } catch (error) {
     res.status(500).json({

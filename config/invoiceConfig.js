@@ -1,42 +1,49 @@
 module.exports = {
   // Company information
   company: {
-    name: 'Brands R Khan',
-    address: '123 Business Street',
-    city: 'Lahore, Pakistan',
-    phone: '(555) 123-4567',
-    email: 'info@brandsrkhan.com',
-    website: 'https://brandsrkhan.com'
+    name: 'BrandsRkhan',
+    tagline: 'Premium Quality Products',
+    address: 'Main Boulevard, Gulberg III',
+    city: 'Lahore, Punjab 54000, Pakistan',
+    phone: '+92-42-123-4567',
+    email: 'brandrkhanofficial@gmail.com',
+    website: 'https://brandsrkhan.com',
+    colors: {
+      primary: '#1976d2',
+      secondary: '#dc004e',
+      success: '#388e3c',
+      text: '#333333'
+    }
   },
   
   // Invoice settings
   invoice: {
-    prefix: 'INV',
-    numberLength: 8, // Length of order ID to use in invoice number
-    currency: 'USD',
-    currencySymbol: '$',
-    taxRate: 0, // Set to 0 for no tax, or percentage like 0.08 for 8%
-    retentionDays: 30 // How long to keep invoice files
+    prefix: 'BRK',
+    numberLength: 8,
+    currency: 'PKR',
+    currencySymbol: 'PKR ',
+    taxRate: 0,
+    retentionDays: 30
   },
   
   // Email settings
   email: {
-    subject: 'Your Invoice for Order #{orderId}',
-    fromName: 'Your Store Name',
-    replyTo: 'support@yourstore.com'
+    subject: 'Invoice from BrandsRkhan - Order #{orderId}',
+    fromName: 'BrandsRkhan',
+    replyTo: 'brandrkhanofficial@gmail.com'
   },
   
   // PDF settings
   pdf: {
     pageSize: 'A4',
-    margin: 50,
+    margin: 40,
     fontFamily: 'Helvetica',
     fontSize: {
-      title: 24,
-      subtitle: 20,
-      header: 12,
-      body: 10,
-      footer: 8
+      title: 28,
+      subtitle: 18,
+      header: 14,
+      body: 11,
+      footer: 9
     }
   }
 }; 

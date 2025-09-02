@@ -23,12 +23,26 @@ const sendEmail = async (to, subject, text, html = null, attachments = []) => {
   await transporter.sendMail(mailOptions);
 };
 
+const { getEmailTemplate } = require('../templates/emailTemplates');
+
 // Specialized function for sending invoice emails
-const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath) => {
-  const htmlContent = `
+const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath, customerName, totalAmount) => {
+  const templateData = {
+    customerName: customerName || 'Valued Customer',
+    orderId,
+    invoiceNumber,
+    orderDate: new Date(),
+    totalAmount,
+    paymentStatus: 'Confirmed'
+  };
+  
+  const htmlContent = getEmailTemplate('invoiceEmail', templateData);
+  
+  const fallbackHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h1 style="color: #333; margin: 0; text-align: center;">Thank You for Your Order!</h1>
+      <div style="background: linear-gradient(135deg, #1976d2 0%, #dc004e 100%); color: white; padding: 30px; text-align: center;">
+        <h1 style="font-size: 32px; margin: 0;">BrandsRkhan</h1>
+        <p style="margin: 5px 0; opacity: 0.9;">Premium Quality Products</p>
       </div>
       
       <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
@@ -83,29 +97,22 @@ const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath) => {
   `;
 
   const textContent = `
-Thank You for Your Order!
+Invoice from BrandsRkhan
 
-Dear Customer,
+Dear ${customerName || 'Valued Customer'},
 
-Thank you for placing your order with us! Your order has been successfully processed and confirmed.
+Thank you for your order! Please find your invoice attached.
 
 Order Details:
 - Order ID: ${orderId}
 - Invoice Number: ${invoiceNumber}
+- Total Amount: PKR ${totalAmount}
 - Order Date: ${new Date().toLocaleDateString()}
 
-Please find your detailed invoice attached to this email. You can use this invoice for your records and for any warranty claims.
+Thank you for choosing BrandsRkhan - Premium Quality Products.
 
-What's Next?
-- We'll process your order and prepare it for shipping
-- You'll receive a shipping confirmation email with tracking details
-- Your order will be delivered to your specified address
-
-If you have any questions about your order, please don't hesitate to contact our customer support team.
-
-Thank you for choosing us!
-
-This is an automated email. Please do not reply to this message.
+Best regards,
+BrandsRkhan Team
   `;
 
   const attachments = [{
@@ -113,7 +120,7 @@ This is an automated email. Please do not reply to this message.
     path: filepath
   }];
 
-  await sendEmail(to, `Your Invoice for Order #${orderId}`, textContent, htmlContent, attachments);
+  await sendEmail(to, `Invoice from BrandsRkhan - Order #${orderId}`, textContent, htmlContent, attachments);
 };
 
 // Professional welcome email

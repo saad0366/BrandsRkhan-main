@@ -1,8 +1,8 @@
-export const formatCurrency = (amount, currency = 'USD') => {
-  // Ensure currency is a valid string, default to USD if invalid
-  const validCurrency = typeof currency === 'string' && currency.length === 3 ? currency : 'USD';
+export const formatCurrency = (amount, currency = 'PKR') => {
+  // Ensure currency is a valid string, default to PKR if invalid
+  const validCurrency = typeof currency === 'string' && currency.length === 3 ? currency : 'PKR';
   
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-PK', {
     style: 'currency',
     currency: validCurrency,
     minimumFractionDigits: 0,

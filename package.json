@@ -19,7 +19,8 @@
     "nodemailer": "^6.9.4",
     "pdfkit": "^0.13.0",
     "cookie-parser": "^1.4.6",
-    "exceljs": "^4.3.0"
+    "exceljs": "^4.3.0",
+    "csv-writer": "^1.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

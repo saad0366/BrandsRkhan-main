@@ -32,7 +32,7 @@ const Checkout = () => {
   const dispatch = useDispatch();
   const { items, totalPrice, discount, total } = useSelector(state => state.cart);
   const { available: offers } = useSelector(state => state.offers);
-  const shipping = 10; // Flat shipping for now
+  const shipping = 100; // Flat shipping 100 PKR
   const navigate = useNavigate();
   const [showPayFast, setShowPayFast] = React.useState(false);
   const [paymentLoading, setPaymentLoading] = React.useState(false);

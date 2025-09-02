@@ -74,11 +74,11 @@ const PayFastPayment = ({ orderTotal, originalTotal, discount, onPaymentSubmit, 
         </Alert>
 
         <Typography variant="h5" sx={{ mb: 3, textAlign: 'center', color: 'primary.main' }}>
-          Amount to Pay: R{orderTotal?.toFixed(2)}
+          Amount to Pay: PKR {orderTotal?.toFixed(0)}
         </Typography>
         {discount > 0 && (
           <Typography variant="body2" color="success.main" sx={{ textAlign: 'center', mb: 2 }}>
-            🎉 You saved R{discount?.toFixed(2)} with offers!
+            🎉 You saved PKR {discount?.toFixed(0)} with offers!
           </Typography>
         )}
 
@@ -144,7 +144,7 @@ const PayFastPayment = ({ orderTotal, originalTotal, discount, onPaymentSubmit, 
             {loading ? (
               <CircularProgress size={24} color="inherit" />
             ) : (
-              `Pay R${orderTotal?.toFixed(2)} with PayFast`
+              `Pay PKR ${orderTotal?.toFixed(0)} with PayFast`
             )}
           </Button>
         </form>

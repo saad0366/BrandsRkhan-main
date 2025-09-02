@@ -21,22 +21,32 @@ const generateInvoice = async (order, user) => {
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      // Add company header
+      // Add professional header with branding
+      doc.rect(0, 0, doc.page.width, 120).fill('#1976d2');
+      
       doc.fontSize(config.pdf.fontSize.title)
          .font('Helvetica-Bold')
-         .text(config.company.name, { align: 'center' })
-         .fontSize(config.pdf.fontSize.header)
+         .fillColor('white')
+         .text(config.company.name, 50, 30, { align: 'left' })
+         .fontSize(12)
          .font('Helvetica')
-         .text(config.company.address, { align: 'center' })
-         .text(config.company.city, { align: 'center' })
-         .text(`Phone: ${config.company.phone} | Email: ${config.company.email}`, { align: 'center' })
-         .moveDown(2);
+         .text(config.company.tagline, 50, 65, { align: 'left' })
+         .fontSize(10)
+         .text(`${config.company.address}`, 400, 30, { align: 'right', width: 150 })
+         .text(`${config.company.city}`, 400, 45, { align: 'right', width: 150 })
+         .text(`Phone: ${config.company.phone}`, 400, 60, { align: 'right', width: 150 })
+         .text(`Email: ${config.company.email}`, 400, 75, { align: 'right', width: 150 })
+         .fillColor('black')
+         .moveDown(3);
 
-      // Add invoice title and details
+      // Add invoice title with styling
+      doc.rect(50, 140, 500, 40).fill('#f8f9fa').stroke('#ddd');
       doc.fontSize(config.pdf.fontSize.subtitle)
          .font('Helvetica-Bold')
-         .text('INVOICE', { align: 'center' })
-         .moveDown(1);
+         .fillColor('#1976d2')
+         .text('INVOICE', 50, 155, { align: 'center', width: 500 })
+         .fillColor('black')
+         .moveDown(2);
 
       // Invoice details section
       const invoiceDetails = {
@@ -82,81 +92,97 @@ const generateInvoice = async (order, user) => {
       doc.moveDown(3);
       const tableTop = yPosition + 40;
       
-      // Table headers
+      // Table headers with background
+      doc.rect(50, tableTop - 5, 500, 25).fill('#1976d2');
       doc.font('Helvetica-Bold')
          .fontSize(config.pdf.fontSize.body)
-         .text('Item', 50, tableTop)
-         .text('Quantity', 250, tableTop)
-         .text('Price', 350, tableTop)
-         .text('Total', 450, tableTop);
+         .fillColor('white')
+         .text('Item', 60, tableTop + 5)
+         .text('Qty', 250, tableTop + 5)
+         .text('Price', 350, tableTop + 5)
+         .text('Total', 450, tableTop + 5)
+         .fillColor('black');
 
-      // Table separator line
-      doc.moveTo(50, tableTop + 20)
-         .lineTo(550, tableTop + 20)
-         .stroke();
+      // No separator line needed with background
 
-      // Table rows
-      let currentY = tableTop + 30;
+      // Table rows with alternating colors
+      let currentY = tableTop + 25;
       order.orderItems.forEach((item, index) => {
         const effectivePrice = item.discountedPrice || item.price;
         const itemTotal = effectivePrice * item.quantity;
+        const rowHeight = item.discountedPrice && item.discountedPrice < item.price ? 35 : 25;
+        
+        // Alternating row background
+        if (index % 2 === 0) {
+          doc.rect(50, currentY - 2, 500, rowHeight).fill('#f8f9fa');
+        }
         
         doc.font('Helvetica')
            .fontSize(config.pdf.fontSize.body)
-           .text(item.name, 50, currentY)
+           .fillColor('black')
+           .text(item.name, 60, currentY, { width: 180 })
            .text(item.quantity.toString(), 250, currentY);
         
-        // Show original price with strikethrough if discounted
+        // Show discounted price with original price
         if (item.discountedPrice && item.discountedPrice < item.price) {
-          doc.text(`${config.invoice.currencySymbol}${item.discountedPrice.toFixed(2)}`, 350, currentY)
+          doc.fillColor('#388e3c')
+             .text(`${config.invoice.currencySymbol}${item.discountedPrice.toFixed(0)}`, 350, currentY)
              .fontSize(8)
-             .text(`(was ${config.invoice.currencySymbol}${item.price.toFixed(2)})`, 350, currentY + 10)
-             .fontSize(config.pdf.fontSize.body);
+             .fillColor('#666')
+             .text(`(was ${config.invoice.currencySymbol}${item.price.toFixed(0)})`, 350, currentY + 12)
+             .fontSize(config.pdf.fontSize.body)
+             .fillColor('black');
         } else {
-          doc.text(`${config.invoice.currencySymbol}${item.price.toFixed(2)}`, 350, currentY);
+          doc.text(`${config.invoice.currencySymbol}${item.price.toFixed(0)}`, 350, currentY);
         }
         
-        doc.text(`${config.invoice.currencySymbol}${itemTotal.toFixed(2)}`, 450, currentY);
+        doc.font('Helvetica-Bold')
+           .text(`${config.invoice.currencySymbol}${itemTotal.toFixed(0)}`, 450, currentY)
+           .font('Helvetica');
         
-        currentY += item.discountedPrice && item.discountedPrice < item.price ? 35 : 25;
+        currentY += rowHeight;
       });
 
-      // Table bottom line
-      doc.moveTo(50, currentY + 10)
-         .lineTo(550, currentY + 10)
-         .stroke();
+      // Table bottom border
+      doc.rect(50, currentY + 5, 500, 2).fill('#1976d2');
 
       // Calculate totals
       const subtotal = order.itemsPrice || order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const discount = order.discount || 0;
-      const shippingCharges = order.shippingPrice || 10;
+      const shippingCharges = order.shippingPrice || 100;
       const total = order.totalPrice;
 
-      // Totals section
+      // Totals section with styling
       currentY += 30;
-      doc.font('Helvetica-Bold')
-         .text('Subtotal:', 400, currentY)
-         .text(`${config.invoice.currencySymbol}${subtotal.toFixed(2)}`, 500, currentY);
+      doc.rect(350, currentY - 10, 200, 120).fill('#f8f9fa').stroke('#ddd');
+      
+      currentY += 10;
+      doc.font('Helvetica')
+         .fontSize(config.pdf.fontSize.body)
+         .text('Subtotal:', 360, currentY)
+         .text(`${config.invoice.currencySymbol}${subtotal.toFixed(0)}`, 480, currentY);
       
       // Show discount if applicable
       if (discount > 0) {
         currentY += 20;
-        doc.font('Helvetica')
-           .fillColor('green')
-           .text('Discount:', 400, currentY)
-           .text(`-${config.invoice.currencySymbol}${discount.toFixed(2)}`, 500, currentY)
+        doc.fillColor('#388e3c')
+           .text('Discount:', 360, currentY)
+           .text(`-${config.invoice.currencySymbol}${discount.toFixed(0)}`, 480, currentY)
            .fillColor('black');
       }
       
       currentY += 20;
-      doc.font('Helvetica-Bold')
-         .text('Shipping:', 400, currentY)
-         .text(`${config.invoice.currencySymbol}${shippingCharges.toFixed(2)}`, 500, currentY);
+      doc.text('Shipping:', 360, currentY)
+         .text(`${config.invoice.currencySymbol}${shippingCharges.toFixed(0)}`, 480, currentY);
       
-      currentY += 20;
+      currentY += 25;
+      doc.rect(360, currentY - 5, 180, 25).fill('#1976d2');
       doc.fontSize(config.pdf.fontSize.header)
-         .text('Total:', 400, currentY)
-         .text(`${config.invoice.currencySymbol}${total.toFixed(2)}`, 500, currentY);
+         .font('Helvetica-Bold')
+         .fillColor('white')
+         .text('Total:', 370, currentY + 5)
+         .text(`${config.invoice.currencySymbol}${total.toFixed(0)}`, 480, currentY + 5)
+         .fillColor('black');
 
       // Payment status
       currentY += 30;
@@ -169,11 +195,18 @@ const generateInvoice = async (order, user) => {
         doc.text(`Paid on: ${new Date(order.paidAt).toLocaleDateString()}`, 50, currentY);
       }
 
-      // Footer
-      doc.fontSize(config.pdf.fontSize.footer)
+      // Professional footer
+      const footerY = doc.page.height - 100;
+      doc.rect(0, footerY - 20, doc.page.width, 100).fill('#333');
+      
+      doc.fontSize(14)
+         .font('Helvetica-Bold')
+         .fillColor('white')
+         .text('Thank you for choosing BrandsRkhan!', 50, footerY, { align: 'center', width: 500 })
+         .fontSize(config.pdf.fontSize.footer)
          .font('Helvetica')
-         .text('Thank you for your business!', { align: 'center' })
-         .text('This is a computer-generated invoice. No signature required.', { align: 'center' });
+         .text('This is a computer-generated invoice. No signature required.', 50, footerY + 20, { align: 'center', width: 500 })
+         .text(`Visit us: ${config.company.website}`, 50, footerY + 35, { align: 'center', width: 500 });
 
       // Finalize PDF
       doc.end();
