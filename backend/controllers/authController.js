@@ -36,7 +36,11 @@ exports.register = async (req, res) => {
     console.log('User registered successfully:', user._id);
 
     // Generate token
+    console.log('Generating token for user:', user._id);
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+    
     const token = user.getSignedJwtToken();
+    console.log('Token generated:', !!token);
 
     // Set cookie
     res.cookie('token', token, {
@@ -45,6 +49,7 @@ exports.register = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
+    console.log('Sending success response');
     res.status(201).json({
       success: true,
       token,

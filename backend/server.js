@@ -55,6 +55,15 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test route is working!' });
 });
 
+// API Test route
+app.get('/api/v1/test', (req, res) => {
+  res.json({ 
+    message: 'API is working!', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Routes
 app.use('/api/v1/auth', require('./routes/authRoutes'));
 app.use('/api/v1/users', require('./routes/userRoutes'));
