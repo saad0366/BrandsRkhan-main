@@ -7,7 +7,7 @@ const { sendWelcomeEmail } = require('../utils/sendEmail');
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password,role } = req.body;
     console.log('Register attempt:', { name, email });
 
     // Check if user exists
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password
+      password,role
     });
 
     // Send welcome email
