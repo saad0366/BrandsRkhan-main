@@ -25,7 +25,9 @@ app.use(cookieParser());
 app.use(cors({
     origin: [
       process.env.CLIENT_URL || 'http://localhost:3000',
-      process.env.FRONTEND_URL || 'http://localhost:5173'
+      process.env.FRONTEND_URL || 'http://localhost:5173',
+        'https://brands-r-khan.com',
+    'https://www.brands-r-khan.com'
     ], // Allow both React and Vite ports
     credentials: true               // Allow cookies/auth headers
 }));
