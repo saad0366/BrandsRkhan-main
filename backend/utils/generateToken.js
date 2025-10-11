@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+const JWT_SECRET="sad";
 const generateToken = (id, role) => {
   return jwt.sign(
     { id, role },
