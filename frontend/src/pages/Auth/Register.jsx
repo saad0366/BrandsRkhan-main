@@ -15,8 +15,9 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Google, Facebook } from '@mui/icons-material';
-import { register, clearError } from '../../redux/slices/authSlice';
+import { clearError } from '../../redux/slices/authSlice';
 import { registerSchema } from '../../utils/validators';
+import { sendVerificationOtp } from '../../api/authAPI';
 import { toast } from 'react-toastify';
 
 const Register = () => {
@@ -43,21 +44,26 @@ const Register = () => {
     };
   }, [dispatch]);
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
     try {
-      const result = await dispatch(register(values)).unwrap();
+      await sendVerificationOtp(values);
       
-      // Check the user role from the registration response
-      if (result.user && result.user.role === 'admin') {
-        navigate('/admin', { replace: true });
-        toast.success('Welcome to Admin Dashboard!');
-      } else {
-        // For regular users, redirect to products page
-        navigate('/products', { replace: true });
-        toast.success('Account created successfully! Welcome to our store!');
-      }
+      // Redirect to verification page with email
+      navigate('/verify-email', { 
+        state: { email: values.email },
+        replace: true 
+      });
+      
+      toast.success('Verification code sent to your email!');
     } catch (error) {
-      // Error handled in slice
+      const errorMessage = error.response?.data?.error || 'Registration failed';
+      if (errorMessage.includes('Email already registered')) {
+        setFieldError('email', errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 

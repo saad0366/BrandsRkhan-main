@@ -62,16 +62,17 @@ exports.placeOrder = async (req, res) => {
     });
     const createdOrder = await order.save();
     
-    // Generate and send invoice
-    try {
-      const user = await User.findById(req.user._id);
-      const { filepath, invoiceNumber } = await generateInvoice(createdOrder, user);
-      await sendInvoiceEmail(user.email, createdOrder._id.toString(), invoiceNumber, filepath);
-      console.log(`Invoice generated and sent for order ${createdOrder._id}`);
-    } catch (invoiceError) {
-      console.error('Error generating/sending invoice:', invoiceError);
-      // Don't fail the order if invoice generation fails
-    }
+    // Generate and send invoice asynchronously (don't block order creation)
+    setImmediate(async () => {
+      try {
+        const user = await User.findById(req.user._id);
+        const { filepath, invoiceNumber } = await generateInvoice(createdOrder, user);
+        await sendInvoiceEmail(user.email, createdOrder._id.toString(), invoiceNumber, filepath, user.name, createdOrder.totalPrice, createdOrder);
+        console.log(`Invoice generated and sent for order ${createdOrder._id}`);
+      } catch (invoiceError) {
+        console.error('Error generating/sending invoice:', invoiceError);
+      }
+    });
     
     res.status(201).json(createdOrder);
   } catch (error) {
@@ -235,7 +236,7 @@ exports.reorder = async (req, res) => {
     try {
       const user = await User.findById(req.user._id);
       const { filepath, invoiceNumber } = await generateInvoice(newOrder, user);
-      await sendInvoiceEmail(user.email, newOrder._id.toString(), invoiceNumber, filepath);
+      await sendInvoiceEmail(user.email, newOrder._id.toString(), invoiceNumber, filepath, user.name, newOrder.totalPrice, newOrder);
       console.log(`Invoice generated and sent for reorder ${newOrder._id}`);
     } catch (invoiceError) {
       console.error('Error generating/sending invoice for reorder:', invoiceError);

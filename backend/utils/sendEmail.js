@@ -3,28 +3,43 @@ const fs = require('fs');
 require('dotenv').config();
 
 const sendEmail = async (to, subject, text, html = null, attachments = []) => {
-  const transporter = nodemailer.createTransporter({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 5000,     // 5 seconds
+      socketTimeout: 10000       // 10 seconds
+    });
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    text,
-    ...(html && { html }),
-    ...(attachments.length > 0 && { attachments })
-  };
+    const mailOptions = {
+      from: `"BrandsRkhan" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      ...(html && { html }),
+      ...(attachments.length > 0 && { attachments })
+    };
 
-  await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${to}`);
+    return result;
+  } catch (error) {
+    console.error(`❌ Email failed to ${to}:`, error.message);
+    throw error;
+  }
 };
 
 // Specialized function for sending invoice emails
-const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath, customerName, totalAmount) => {
+const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath, customerName, totalAmount, order) => {
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #1976d2 0%, #dc004e 100%); color: white; padding: 30px; text-align: center;">
@@ -42,7 +57,7 @@ const sendInvoiceEmail = async (to, orderId, invoiceNumber, filepath, customerNa
           <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
           <p><strong>Order Date:</strong> ${new Date().toLocaleDateString()}</p>
           <p><strong>Total Amount:</strong> PKR ${totalAmount}</p>
-          <p><strong>Payment Status:</strong> <span style="color: #388e3c; font-weight: bold;">Confirmed</span></p>
+          <p><strong>Payment Status:</strong> <span style="color: ${order.isPaid ? '#388e3c' : '#dc3545'}; font-weight: bold;">${order.isPaid ? 'Paid' : 'Pending'}</span></p>
         </div>
 
         <p>Thank you for choosing BrandsRkhan. We appreciate your business!</p>

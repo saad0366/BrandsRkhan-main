@@ -172,7 +172,8 @@ const generateInvoice = async (order, user) => {
       }
       
       currentY += 20;
-      doc.text('Shipping:', 360, currentY)
+      doc.fillColor('black')
+         .text('Shipping:', 360, currentY)
          .text(`${config.invoice.currencySymbol}${shippingCharges.toFixed(0)}`, 480, currentY);
       
       currentY += 25;
@@ -181,6 +182,7 @@ const generateInvoice = async (order, user) => {
          .font('Helvetica-Bold')
          .fillColor('white')
          .text('Total:', 370, currentY + 5)
+         .fillColor('white')
          .text(`${config.invoice.currencySymbol}${total.toFixed(0)}`, 480, currentY + 5)
          .fillColor('black');
 

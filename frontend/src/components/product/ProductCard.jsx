@@ -38,6 +38,9 @@ const ProductCard = ({ product }) => {
         return null;
       }
       
+      console.log('Product ID:', product._id, 'Product Name:', product.name);
+      console.log('Available offers:', offers.map(o => ({ name: o.name, products: o.applicableProducts })));
+      
       const validOffers = offers.filter(offer => {
         try {
           if (!offer || !offer.active) return false;
@@ -46,6 +49,12 @@ const ProductCard = ({ product }) => {
           
           // Check if product is specifically included
           if (offer.applicableProducts && Array.isArray(offer.applicableProducts) && offer.applicableProducts.length > 0) {
+            console.log('Checking product match:', {
+              productId: product._id,
+              offerProducts: offer.applicableProducts,
+              offerProductsDetailed: offer.applicableProducts.map(p => ({ id: p, type: typeof p })),
+              includes: offer.applicableProducts.includes(product._id)
+            });
             return offer.applicableProducts.includes(product._id);
           }
           
@@ -54,14 +63,19 @@ const ProductCard = ({ product }) => {
             return offer.applicableCategories.includes(product.category);
           }
           
-          // If no specific products or categories, offer applies to all
-          return (!offer.applicableProducts || offer.applicableProducts.length === 0) && 
-                 (!offer.applicableCategories || offer.applicableCategories.length === 0);
+          // Only apply to all products if BOTH arrays are explicitly empty (not just undefined)
+          const hasNoProducts = !offer.applicableProducts || offer.applicableProducts.length === 0;
+          const hasNoCategories = !offer.applicableCategories || offer.applicableCategories.length === 0;
+          
+          // Only show on all products if it's a general offer (no specific targeting)
+          return hasNoProducts && hasNoCategories;
         } catch (error) {
           console.warn('Error processing offer:', error);
           return false;
         }
       });
+      
+      console.log('Valid offers for product:', validOffers);
       
       if (validOffers.length === 0) return null;
       

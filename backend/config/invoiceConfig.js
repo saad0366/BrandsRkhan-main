@@ -7,7 +7,7 @@ module.exports = {
     city: 'Lahore, Punjab 54000, Pakistan',
     phone: '+92-42-123-4567',
     email: 'brandrkhanofficial@gmail.com',
-    website: 'https://brandsrkhan.com',
+    website: 'https://brands-r-khan.com',
     colors: {
       primary: '#1976d2',
       secondary: '#dc004e',

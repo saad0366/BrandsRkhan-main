@@ -139,15 +139,11 @@ const OfferManagement = () => {
         formData.append('bannerImage', bannerImage);
       }
       
-      // Add applicable products
-      if (applicableProducts.length > 0) {
-        applicableProducts.forEach(id => formData.append('applicableProducts', id));
-      }
+      // Add applicable products as JSON
+      formData.append('applicableProducts', JSON.stringify(applicableProducts));
       
-      // Add applicable categories
-      if (applicableCategories.length > 0) {
-        applicableCategories.forEach(cat => formData.append('applicableCategories', cat));
-      }
+      // Add applicable categories as JSON
+      formData.append('applicableCategories', JSON.stringify(applicableCategories));
       
       // Set default values for optional fields
       if (!formData.has('minimumPurchaseAmount')) {

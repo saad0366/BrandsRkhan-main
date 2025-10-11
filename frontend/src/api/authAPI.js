@@ -8,6 +8,14 @@ export const registerUser = async (userData) => {
   return await axiosClient.post('/auth/register', userData);
 };
 
+export const sendVerificationOtp = async (userData) => {
+  return await axiosClient.post('/auth/send-verification-otp', userData);
+};
+
+export const verifyEmailAndRegister = async (email, otp) => {
+  return await axiosClient.post('/auth/verify-email', { email, otp });
+};
+
 export const logoutUser = async () => {
   return await axiosClient.post('/auth/logout');
 };
@@ -26,13 +34,13 @@ export const changePassword = async (passwords) => {
 
 // OTP and Password Reset Functions
 export const sendOtp = async (email) => {
-  return await axiosClient.post('/users/sentOtp', { email });
+  return await axiosClient.post('/auth/forgot-password', { email });
 };
 
 export const verifyOtp = async (email, otp) => {
-  return await axiosClient.post('/users/verifyOtp', { email, otp });
+  return await axiosClient.post('/auth/verify-otp', { email, otp });
 };
 
 export const resetPassword = async (email, otp, newPassword) => {
-  return await axiosClient.post('/users/resetPassword', { email, otp, newPassword });
+  return await axiosClient.post('/auth/reset-password', { email, otp, newPassword });
 };

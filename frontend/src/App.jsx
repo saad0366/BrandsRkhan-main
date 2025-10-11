@@ -23,6 +23,7 @@ const Products = lazy(() => import('./pages/Products'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Login = lazy(() => import('./pages/Auth/Login'));
 const Register = lazy(() => import('./pages/Auth/Register'));
+const VerifyEmail = lazy(() => import('./pages/Auth/VerifyEmail'));
 const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
 const VerifyOTP = lazy(() => import('./pages/Auth/VerifyOTP'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
@@ -97,6 +98,7 @@ const AppContent = () => {
                   <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-otp" element={<VerifyOTP />} />
               <Route path="/reset-password" element={<ResetPassword />} />

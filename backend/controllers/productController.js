@@ -101,19 +101,46 @@ exports.createProduct = async (req, res) => {
     const { name, description, price, category, brand, stock } = req.body;
     const images = [];
 
+    // Check Cloudinary config
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({
+        success: false,
+        error: 'Cloudinary configuration missing'
+      });
+    }
+
     // Upload images to cloudinary
     if (req.files) {
+      console.log('Files received:', req.files);
       // Handle both array and any upload formats
       const filesToProcess = Array.isArray(req.files) ? req.files : Object.values(req.files).flat();
       
       if (filesToProcess && filesToProcess.length > 0) {
         for (const file of filesToProcess) {
-          const result = await cloudinary.uploader.upload(file.path);
-          images.push(result.secure_url);
-          // Remove file from uploads folder
-          fs.unlinkSync(file.path);
+          try {
+            console.log('Uploading file:', file.path);
+            const result = await cloudinary.uploader.upload(file.path, {
+              timeout: 60000, // 60 seconds
+              resource_type: 'auto',
+              quality: 'auto:good',
+              fetch_format: 'auto'
+            });
+            images.push(result.secure_url);
+            console.log('Upload successful:', result.secure_url);
+            // Remove file from uploads folder
+            fs.unlinkSync(file.path);
+          } catch (uploadError) {
+            console.error('Cloudinary upload error:', uploadError);
+            // Clean up file on error
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
+            throw new Error(`Image upload failed: ${uploadError.message}`);
+          }
         }
       }
+    } else {
+      console.log('No files received in request');
     }
 
     const product = await Product.create({

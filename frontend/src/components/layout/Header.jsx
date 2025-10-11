@@ -162,10 +162,12 @@ const Header = () => {
   const menuItems = [
     { text: 'Home', icon: <Home />, path: '/' },
     { text: 'Products', icon: <Category />, path: '/products' },
-    { text: 'Blog', icon: <Category />, path: '/blog' },
-    { text: 'About', icon: <Category />, path: '/about' },
-    { text: 'Contact', icon: <Category />, path: '/contact' },
-    { text: 'Cart', icon: <ShoppingCart />, path: '/cart', badge: cartItemsCount },
+    ...(user?.role !== 'admin' ? [
+      { text: 'Blog', icon: <Category />, path: '/blog' },
+      { text: 'About', icon: <Category />, path: '/about' },
+      { text: 'Contact', icon: <Category />, path: '/contact' },
+      { text: 'Cart', icon: <ShoppingCart />, path: '/cart', badge: cartItemsCount },
+    ] : [])
   ];
 
   let authMenuItems;
@@ -256,15 +258,29 @@ const Header = () => {
               <CyberButton color="inherit" component={Link} to="/products" sx={{ mr: 1 }}>
                 Products
               </CyberButton>
-              <CyberButton color="inherit" component={Link} to="/blog" sx={{ mr: 1 }}>
-                Blog
-              </CyberButton>
-              <CyberButton color="inherit" component={Link} to="/about" sx={{ mr: 1 }}>
-                About
-              </CyberButton>
-              <CyberButton color="inherit" component={Link} to="/contact" sx={{ mr: 1 }}>
-                Contact
-              </CyberButton>
+              {user?.role === 'admin' && (
+                <>
+                  <CyberButton color="inherit" component={Link} to="/admin" sx={{ mr: 1 }}>
+                    Admin Dashboard
+                  </CyberButton>
+                  <CyberButton color="inherit" component={Link} to="/admin/products" sx={{ mr: 1 }}>
+                    Product Management
+                  </CyberButton>
+                </>
+              )}
+              {user?.role !== 'admin' && (
+                <>
+                  <CyberButton color="inherit" component={Link} to="/blog" sx={{ mr: 1 }}>
+                    Blog
+                  </CyberButton>
+                  <CyberButton color="inherit" component={Link} to="/about" sx={{ mr: 1 }}>
+                    About
+                  </CyberButton>
+                  <CyberButton color="inherit" component={Link} to="/contact" sx={{ mr: 1 }}>
+                    Contact
+                  </CyberButton>
+                </>
+              )}
             </Box>
           )}
 
@@ -285,22 +301,24 @@ const Header = () => {
           </Search>
 
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              color="inherit"
-              component={Link}
-              to="/cart"
-              sx={{ 
-                ml: 1,
-                '&:hover': {
-                  background: 'rgba(0, 255, 255, 0.1)',
-                  boxShadow: '0 0 10px rgba(0, 255, 255, 0.3)',
-                }
-              }}
-            >
-              <Badge badgeContent={cartItemsCount} color="secondary">
-                <ShoppingCart />
-              </Badge>
-            </IconButton>
+            {user?.role !== 'admin' && (
+              <IconButton
+                color="inherit"
+                component={Link}
+                to="/cart"
+                sx={{ 
+                  ml: 1,
+                  '&:hover': {
+                    background: 'rgba(0, 255, 255, 0.1)',
+                    boxShadow: '0 0 10px rgba(0, 255, 255, 0.3)',
+                  }
+                }}
+              >
+                <Badge badgeContent={cartItemsCount} color="secondary">
+                  <ShoppingCart />
+                </Badge>
+              </IconButton>
+            )}
 
             {isAuthenticated ? (
               <IconButton

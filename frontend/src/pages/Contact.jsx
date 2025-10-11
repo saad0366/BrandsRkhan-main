@@ -42,9 +42,9 @@ const Contact = () => {
     {
       title: 'Visit Our Showroom',
       details: [
-        '123 Luxury Avenue, Downtown',
-        'New York, NY 10001',
-        'United States'
+        'Anarkali bazzar ',
+        'Lahore, Punjab',
+        'Pakistan'
       ],
       icon: <LocationOn />,
       color: '#1976d2'
@@ -52,9 +52,9 @@ const Contact = () => {
     {
       title: 'Call Us',
       details: [
-        '+1 (555) 123-4567',
-        '+1 (555) 987-6543',
-        'Mon-Fri: 9AM-6PM EST'
+        '+92 (301) 505-2005',
+        
+        'Mon-Fri: 9AM-9PM '
       ],
       icon: <Phone />,
       color: '#2e7d32'
@@ -62,8 +62,6 @@ const Contact = () => {
     {
       title: 'Email Us',
       details: [
-        'brandrkhanoffical@gmail.com',
-        'brandrkhanoffical@gmail.com',
         'brandrkhanoffical@gmail.com'
       ],
       icon: <Email />,
@@ -72,7 +70,7 @@ const Contact = () => {
     {
       title: 'Business Hours',
       details: [
-        'Monday - Friday: 9:00 AM - 6:00 PM',
+        'Monday - Friday: 9:00 AM - 9:00 PM',
         'Saturday: 10:00 AM - 4:00 PM',
         'Sunday: Closed'
       ],
@@ -82,11 +80,9 @@ const Contact = () => {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', icon: <Facebook />, url: '#', color: '#1877f2' },
-    { name: 'Instagram', icon: <Instagram />, url: '#', color: '#e4405f' },
-    { name: 'LinkedIn', icon: <LinkedIn />, url: '#', color: '#0077b5' },
-    { name: 'Twitter', icon: <Twitter />, url: '#', color: '#1da1f2' },
-    { name: 'WhatsApp', icon: <WhatsApp />, url: '#', color: '#25d366' },
+    { name: 'Facebook', icon: <Facebook />, url: 'https://www.facebook.com/share/1CqAFWkdvy/', color: '#1877f2' },
+    { name: 'Instagram', icon: <Instagram />, url: 'https://www.instagram.com/brandrkhan?igsh=MWZkc2V0b2pqaTNvYw%3D%3D&utm_source=qr', color: '#e4405f' },
+    { name: 'WhatsApp', icon: <WhatsApp />, url: 'https://wa.me/923015052005', color: '#25d366' },
   ];
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -282,9 +278,9 @@ const Contact = () => {
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  123 Luxury Avenue, Downtown<br />
-                  New York, NY 10001<br />
-                  United States
+                  Main anarkali bazzar<br />
+                  Lahore, Punjab<br />
+                  Pakistan
                 </Typography>
               </Card>
 
@@ -303,6 +299,7 @@ const Contact = () => {
                       variant="outlined"
                       size="small"
                       startIcon={social.icon}
+                      onClick={() => window.open(social.url, '_blank')}
                       sx={{ 
                         borderColor: social.color, 
                         color: social.color,
@@ -330,14 +327,16 @@ const Contact = () => {
                   variant="contained"
                   fullWidth
                   startIcon={<Phone />}
+                  onClick={() => window.open('tel:+923015052005', '_self')}
                   sx={{ mb: 1 }}
                 >
-                  Call Now: +1 (555) 123-4567
+                  Call Now: +92 (301) 505-2005
                 </Button>
                 <Button
                   variant="outlined"
                   fullWidth
                   startIcon={<WhatsApp />}
+                  onClick={() => window.open('https://wa.me/923015052005', '_blank')}
                 >
                   WhatsApp Support
                 </Button>

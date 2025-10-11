@@ -60,6 +60,26 @@ exports.createOffer = async (req, res) => {
       });
     }
 
+    // Parse JSON strings if they exist
+    let parsedProducts = [];
+    let parsedCategories = [];
+    
+    if (applicableProducts) {
+      try {
+        parsedProducts = typeof applicableProducts === 'string' ? JSON.parse(applicableProducts) : applicableProducts;
+      } catch (e) {
+        parsedProducts = Array.isArray(applicableProducts) ? applicableProducts : [];
+      }
+    }
+    
+    if (applicableCategories) {
+      try {
+        parsedCategories = typeof applicableCategories === 'string' ? JSON.parse(applicableCategories) : applicableCategories;
+      } catch (e) {
+        parsedCategories = Array.isArray(applicableCategories) ? applicableCategories : [];
+      }
+    }
+
     const offer = await Offer.create({
       name: String(name).trim(),
       description: String(description).trim(),
@@ -67,8 +87,8 @@ exports.createOffer = async (req, res) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       bannerImage,
-      applicableProducts: Array.isArray(applicableProducts) ? applicableProducts : [],
-      applicableCategories: Array.isArray(applicableCategories) ? applicableCategories : [],
+      applicableProducts: parsedProducts,
+      applicableCategories: parsedCategories,
       minimumPurchaseAmount: Number(minimumPurchaseAmount) || 0,
       maximumDiscountAmount: maximumDiscountAmount ? Number(maximumDiscountAmount) : undefined,
       usageLimit: Number(usageLimit) || -1
@@ -198,6 +218,26 @@ exports.updateOffer = async (req, res) => {
       usageLimit
     } = req.body;
 
+    // Parse JSON strings if they exist
+    let parsedProducts = applicableProducts;
+    let parsedCategories = applicableCategories;
+    
+    if (applicableProducts) {
+      try {
+        parsedProducts = typeof applicableProducts === 'string' ? JSON.parse(applicableProducts) : applicableProducts;
+      } catch (e) {
+        parsedProducts = Array.isArray(applicableProducts) ? applicableProducts : [];
+      }
+    }
+    
+    if (applicableCategories) {
+      try {
+        parsedCategories = typeof applicableCategories === 'string' ? JSON.parse(applicableCategories) : applicableCategories;
+      } catch (e) {
+        parsedCategories = Array.isArray(applicableCategories) ? applicableCategories : [];
+      }
+    }
+
     let updateData = {
       name,
       description,
@@ -205,8 +245,8 @@ exports.updateOffer = async (req, res) => {
       startDate,
       endDate,
       active,
-      applicableProducts,
-      applicableCategories,
+      applicableProducts: parsedProducts,
+      applicableCategories: parsedCategories,
       minimumPurchaseAmount,
       maximumDiscountAmount,
       usageLimit
