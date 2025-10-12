@@ -105,7 +105,7 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LocationOn fontSize="small" />
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                  123 Luxury Street, New York, NY 10001
+                  Bedon Road, Street # 10 , Office # 3.
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
