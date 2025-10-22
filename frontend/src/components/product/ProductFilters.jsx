@@ -126,10 +126,10 @@ const ProductFilters = ({ filters, onFilterChange, onClearFilters }) => {
               max={10000}
               step={100}
               marks={[
-                { value: 0, label: '$0' },
-                { value: 2500, label: '$2.5K' },
-                { value: 5000, label: '$5K' },
-                { value: 10000, label: '$10K' },
+                { value: 0, label: '0' },
+                { value: 25000, label: '25K' },
+                { value: 50000, label: '50K' },
+                { value: 100000, label: '100K' },
               ]}
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
