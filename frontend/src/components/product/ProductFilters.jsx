@@ -36,6 +36,11 @@ const ProductFilters = ({ filters, onFilterChange, onClearFilters }) => {
     'Tommy Hilfiger',
     'Hugo Boss',
     'Fossil',
+    'Guess',
+    'Tissot',
+    'Tag Heur',
+    'Other Brands'
+   
   ];
 
   const handlePriceChange = (event, newValue) => {
