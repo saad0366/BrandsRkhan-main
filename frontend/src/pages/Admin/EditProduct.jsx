@@ -20,6 +20,8 @@ import {
 } from '@mui/material';
 import { Save, Delete, CloudUpload, ArrowBack } from '@mui/icons-material';
 import { getProductById, editProduct, clearError } from '../../redux/slices/productSlice';
+import { getBrands } from '../../redux/slices/brandSlice';
+import { getCategories } from '../../redux/slices/categorySlice';
 import { productSchema } from '../../utils/validators';
 import { toast } from 'react-toastify';
 
@@ -28,6 +30,8 @@ const EditProduct = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { loading, error, selectedProduct } = useSelector(state => state.products);
+  const { brands } = useSelector(state => state.brands);
+  const { categories } = useSelector(state => state.categories);
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -36,6 +40,8 @@ const EditProduct = () => {
     if (id) {
       dispatch(getProductById(id));
     }
+    dispatch(getBrands());
+    dispatch(getCategories());
     return () => {
       dispatch(clearError());
     };
@@ -87,13 +93,7 @@ const EditProduct = () => {
     }
   };
 
-  const categories = [
-    "Men's Watches",
-    "Women's Watches", 
-    "Branded Pre-owned Watches",
-    "Top Brand Original Quality Watches",
-    "Master Copy Watches"
-  ];
+
 
   if (!selectedProduct) {
     return (
@@ -156,6 +156,7 @@ const EditProduct = () => {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
+                    select
                     label="Brand"
                     name="brand"
                     value={values.brand}
@@ -164,7 +165,14 @@ const EditProduct = () => {
                     error={touched.brand && Boolean(errors.brand)}
                     helperText={touched.brand && errors.brand}
                     margin="normal"
-                  />
+                  >
+                    <MenuItem value="">Select Brand</MenuItem>
+                    {brands.map((brand) => (
+                      <MenuItem key={brand._id} value={brand.name}>
+                        {brand.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
@@ -213,9 +221,10 @@ const EditProduct = () => {
                     helperText={touched.category && errors.category}
                     margin="normal"
                   >
+                    <MenuItem value="">Select Category</MenuItem>
                     {categories.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {category}
+                      <MenuItem key={category._id} value={category.name}>
+                        {category.name}
                       </MenuItem>
                     ))}
                   </TextField>

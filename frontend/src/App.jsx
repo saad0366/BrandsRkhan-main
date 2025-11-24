@@ -39,6 +39,7 @@ const CreateProduct = lazy(() => import('./pages/Admin/CreateProduct'));
 const EditProduct = lazy(() => import('./pages/Admin/EditProduct'));
 const OfferManagement = lazy(() => import('./pages/Admin/OfferManagement'));
 const OfferAnalytics = lazy(() => import('./pages/Admin/OfferAnalytics'));
+const BrandCategoryManagement = lazy(() => import('./pages/Admin/BrandCategoryManagement'));
 const UserDashboard = lazy(() => import('./pages/User/Dashboard'));
 const Blog = lazy(() => import('./pages/Blog'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -179,6 +180,11 @@ const AppContent = () => {
               <Route path="/admin/offer-analytics" element={
                 <AdminRoute>
                   <OfferAnalytics />
+                </AdminRoute>
+              } />
+              <Route path="/admin/brands-categories" element={
+                <AdminRoute>
+                  <BrandCategoryManagement />
                 </AdminRoute>
               } />
                 </Routes>

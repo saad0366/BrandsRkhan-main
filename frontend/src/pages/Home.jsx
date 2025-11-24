@@ -247,7 +247,7 @@ const Home = () => {
                 borderRadius: '50%',
                 border: '2px solid rgba(0, 255, 255, 0.3)',
                 animation: 'float 8s ease-in-out infinite',
-                zIndex: 1,
+                zIndex: -1,
                 backdropFilter: 'blur(10px)',
               }}
             />
@@ -262,7 +262,7 @@ const Home = () => {
                 borderRadius: '50%',
                 border: '2px solid rgba(160, 32, 240, 0.3)',
                 animation: 'float 10s ease-in-out infinite reverse',
-                zIndex: 1,
+                zIndex: -1,
                 backdropFilter: 'blur(10px)',
               }}
             />
@@ -277,7 +277,7 @@ const Home = () => {
                 borderRadius: '50%',
                 border: '2px solid rgba(0, 255, 136, 0.3)',
                 animation: 'float 12s ease-in-out infinite',
-                zIndex: 1,
+                zIndex: -1,
                 backdropFilter: 'blur(10px)',
               }}
             />
@@ -338,39 +338,7 @@ const Home = () => {
               </Button>
             </Box>
             
-            {/* Scroll Indicator */}
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '5%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 1,
-                animation: 'bounce 2s infinite',
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '0.9rem',
-                  fontFamily: 'Rajdhani, sans-serif',
-                }}
-              >
-                Scroll to explore
-              </Typography>
-              <Box
-                sx={{
-                  width: '2px',
-                  height: '30px',
-                  background: 'linear-gradient(180deg, #00FFFF 0%, transparent 100%)',
-                  borderRadius: '1px',
-                }}
-              />
-            </Box>
+
           </Box>
         </Container>
       </Box>

@@ -43,8 +43,7 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Please provide a product category'],
-    enum: ["Men's Watches", "Women's Watches", "Branded Pre-owned Watches", "Top Brand Original Quality Watches", "Master Copy Watches"]
+    required: [true, 'Please provide a product category']
   },
   brand: {
     type: String,

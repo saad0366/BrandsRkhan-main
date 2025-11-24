@@ -20,7 +20,6 @@ const protect = async (req, res, next) => {
       error: 'Not authorized to access this route'
     });
   }
- const JWT_SECRET="sad";
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

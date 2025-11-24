@@ -10,6 +10,8 @@ export const fetchProducts = async (params = {}) => {
   if (params.brand) queryParams.append('brand', params.brand);
   if (params.search) queryParams.append('search', params.search);
   if (params.sort) queryParams.append('sort', params.sort);
+  if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice);
+  if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice);
   
   const response = await axiosClient.get(`/products?${queryParams.toString()}`);
   return response;

@@ -266,6 +266,9 @@ const Header = () => {
                   <CyberButton color="inherit" component={Link} to="/admin/products" sx={{ mr: 1 }}>
                     Product Management
                   </CyberButton>
+                  <CyberButton color="inherit" component={Link} to="/admin/brands-categories" sx={{ mr: 1 }}>
+                    Brands & Categories
+                  </CyberButton>
                 </>
               )}
               {user?.role !== 'admin' && (
@@ -423,6 +426,11 @@ const Header = () => {
         {user?.role === 'admin' && (
           <MenuItem onClick={() => { navigate('/admin/products'); handleMenuClose(); }}>
             Product Management
+          </MenuItem>
+        )}
+        {user?.role === 'admin' && (
+          <MenuItem onClick={() => { navigate('/admin/brands-categories'); handleMenuClose(); }}>
+            Brands & Categories
           </MenuItem>
         )}
         <MenuItem onClick={handleLogout}>

@@ -17,6 +17,8 @@ import {
 import { FilterList, Close } from '@mui/icons-material';
 import { getProducts, setFilters, setPagination } from '../redux/slices/productSlice';
 import { getActiveOffers } from '../redux/slices/offerSlice';
+import { getBrands } from '../redux/slices/brandSlice';
+import { getCategories } from '../redux/slices/categorySlice';
 import ProductCard from '../components/product/ProductCard';
 import ProductFilters from '../components/product/ProductFilters';
 import ProductSort from '../components/product/ProductSort';
@@ -32,11 +34,15 @@ const Products = () => {
 
   const { items: products, loading, filters, pagination, error } = useSelector(state => state.products);
   const { available: offers } = useSelector(state => state.offers);
+  const { brands } = useSelector(state => state.brands);
+  const { categories } = useSelector(state => state.categories);
 
-  // Load initial products and offers on component mount
+  // Load initial products, offers, brands and categories on component mount
   useEffect(() => {
     dispatch(getProducts({ page: 1 }));
     dispatch(getActiveOffers());
+    dispatch(getBrands());
+    dispatch(getCategories());
   }, [dispatch]);
 
   useEffect(() => {
@@ -105,7 +111,7 @@ const Products = () => {
           Premium Watch Collection
         </Typography>
         <Typography variant="h6" color="text.secondary">
-          Discover luxury timepieces from top brands - Emporio Armani, Michael Kors, Tommy Hilfiger, Hugo Boss, and Fossil
+          Discover luxury timepieces from top brands
         </Typography>
       </Box>
 
@@ -135,6 +141,8 @@ const Products = () => {
               filters={filters}
               onFilterChange={handleFilterChange}
               onClearFilters={clearFilters}
+              brands={brands}
+              categories={categories}
             />
           </Box>
         )}
@@ -237,6 +245,8 @@ const Products = () => {
             clearFilters();
             setFilterDrawerOpen(false);
           }}
+          brands={brands}
+          categories={categories}
         />
       </Drawer>
     </Container>

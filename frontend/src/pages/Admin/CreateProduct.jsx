@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Formik, Form } from 'formik';
@@ -19,6 +19,8 @@ import {
 } from '@mui/material';
 import { Add, Delete, CloudUpload } from '@mui/icons-material';
 import { addProduct, clearError } from '../../redux/slices/productSlice';
+import { getBrands } from '../../redux/slices/brandSlice';
+import { getCategories } from '../../redux/slices/categorySlice';
 import { productSchema } from '../../utils/validators';
 import { toast } from 'react-toastify';
 
@@ -26,10 +28,14 @@ const CreateProduct = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector(state => state.products);
+  const { brands } = useSelector(state => state.brands);
+  const { categories } = useSelector(state => state.categories);
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    dispatch(getBrands());
+    dispatch(getCategories());
     return () => {
       dispatch(clearError());
     };
@@ -70,13 +76,7 @@ const CreateProduct = () => {
     }
   };
 
-  const categories = [
-    "Men's Watches",
-    "Women's Watches", 
-    "Branded Pre-owned Watches",
-    "Top Brand Original Quality Watches",
-    "Master Copy Watches"
-  ];
+
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -139,11 +139,11 @@ const CreateProduct = () => {
                     margin="normal"
                   >
                     <MenuItem value="">Select Brand</MenuItem>
-                    <MenuItem value="Emporio Armani">Emporio Armani</MenuItem>
-                    <MenuItem value="Michael Kors">Michael Kors</MenuItem>
-                    <MenuItem value="Tommy Hilfiger">Tommy Hilfiger</MenuItem>
-                    <MenuItem value="Hugo Boss">Hugo Boss</MenuItem>
-                    <MenuItem value="Fossil">Fossil</MenuItem>
+                    {brands.map((brand) => (
+                      <MenuItem key={brand._id} value={brand.name}>
+                        {brand.name}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 </Grid>
 
@@ -193,9 +193,10 @@ const CreateProduct = () => {
                     helperText={touched.category && errors.category}
                     margin="normal"
                   >
+                    <MenuItem value="">Select Category</MenuItem>
                     {categories.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {category}
+                      <MenuItem key={category._id} value={category.name}>
+                        {category.name}
                       </MenuItem>
                     ))}
                   </TextField>

@@ -3,9 +3,9 @@ module.exports = {
   company: {
     name: 'BrandsRkhan',
     tagline: 'Premium Quality Products',
-    address: 'Main Boulevard, Gulberg III',
-    city: 'Lahore, Punjab 54000, Pakistan',
-    phone: '+92-42-123-4567',
+    address: 'Bedon-Road,Street# 10,Office# 3',
+    city: 'Lahore, Pakistan',
+    phone: '+92 (301) 505-2005',
     email: 'brandrkhanofficial@gmail.com',
     website: 'https://brands-r-khan.com',
     colors: {

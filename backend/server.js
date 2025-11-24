@@ -36,6 +36,7 @@ app.use(cors({
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
+  
 }
 
 // Create invoices directory if it doesn't exist
@@ -75,6 +76,8 @@ app.use('/api/v1/cart', require('./routes/cartRoutes'));
 app.use('/api/v1/offers', require('./routes/offerRoutes'));
 app.use('/api/v1/payments', require('./routes/paymentRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
+app.use('/api/v1/brands', require('./routes/brandRoutes'));
+app.use('/api/v1/categories', require('./routes/categoryRoutes'));
 
 // Error handling
 app.use((err, req, res, next) => {

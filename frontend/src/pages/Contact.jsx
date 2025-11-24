@@ -42,7 +42,7 @@ const Contact = () => {
     {
       title: 'Visit Our Showroom',
       details: [
-        'Bedon Road , Street # 10 , Office # 3',
+        'Anarkali bazzar ',
         'Lahore, Punjab',
         'Pakistan'
       ],
@@ -278,7 +278,7 @@ const Contact = () => {
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Bedon Road , Street # 10 , Office # 3<br />
+                  Main anarkali bazzar<br />
                   Lahore, Punjab<br />
                   Pakistan
                 </Typography>
