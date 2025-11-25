@@ -52,6 +52,9 @@ const Products = () => {
       brand: searchParams.get('brand') || '',
       search: searchParams.get('search') || '',
       sort: searchParams.get('sort') || 'createdAt:desc',
+      minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : 0,
+      maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : 100000,
+      rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : 0,
     };
 
     dispatch(setFilters(urlFilters));
@@ -97,6 +100,9 @@ const Products = () => {
       brand: '',
       search: '',
       sort: 'createdAt:desc',
+      minPrice: 0,
+      maxPrice: 100000,
+      rating: 0,
     };
     handleFilterChange(clearedFilters);
     setSearchParams({});

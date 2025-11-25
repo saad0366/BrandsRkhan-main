@@ -58,9 +58,8 @@ const initialState = {
   error: null,
   filters: {
     category: '',
-    priceRange: [0, 10000],
     minPrice: 0,
-    maxPrice: 10000,
+    maxPrice: 100000,
     brand: '',
     rating: 0,
     sortBy: 'name',
