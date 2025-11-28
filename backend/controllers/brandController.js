@@ -3,7 +3,7 @@ const Brand = require('../models/Brand');
 // Get all brands
 exports.getBrands = async (req, res) => {
   try {
-    const brands = await Brand.find({ isActive: true }).sort({ name: 1 });
+    const brands = await Brand.find().sort({ name: 1 });
     res.status(200).json({
       success: true,
       data: brands
@@ -21,14 +21,14 @@ exports.addBrand = async (req, res) => {
   try {
     const { name } = req.body;
     
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Brand name is required'
       });
     }
 
-    const brand = await Brand.create({ name });
+    const brand = await Brand.create({ name: name.trim() });
     
     res.status(201).json({
       success: true,
@@ -52,11 +52,7 @@ exports.addBrand = async (req, res) => {
 // Delete brand
 exports.deleteBrand = async (req, res) => {
   try {
-    const brand = await Brand.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const brand = await Brand.findByIdAndDelete(req.params.id);
 
     if (!brand) {
       return res.status(404).json({

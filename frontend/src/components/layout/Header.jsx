@@ -177,6 +177,7 @@ const Header = () => {
         { text: 'Profile', icon: <AccountCircle />, path: '/profile' },
         { text: 'Admin Dashboard', icon: <Dashboard />, path: '/admin' },
         { text: 'Product Management', icon: <Inventory />, path: '/admin/products' },
+        { text: 'Brands & Categories', icon: <Category />, path: '/admin/brands-categories' },
         { text: 'Logout', icon: <Logout />, action: handleLogout },
       ];
     } else {

@@ -3,7 +3,7 @@ const Category = require('../models/Category');
 // Get all categories
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true }).sort({ name: 1 });
+    const categories = await Category.find().sort({ name: 1 });
     res.status(200).json({
       success: true,
       data: categories
@@ -21,14 +21,14 @@ exports.addCategory = async (req, res) => {
   try {
     const { name } = req.body;
     
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Category name is required'
       });
     }
 
-    const category = await Category.create({ name });
+    const category = await Category.create({ name: name.trim() });
     
     res.status(201).json({
       success: true,
@@ -52,11 +52,7 @@ exports.addCategory = async (req, res) => {
 // Delete category
 exports.deleteCategory = async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const category = await Category.findByIdAndDelete(req.params.id);
 
     if (!category) {
       return res.status(404).json({

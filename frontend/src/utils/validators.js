@@ -88,7 +88,6 @@ export const productSchema = Yup.object({
     .min(0, 'Price cannot be negative')
     .required('Price is required'),
   category: Yup.string()
-    .oneOf(["Men's Watches", "Women's Watches", "Branded Pre-owned Watches", "Top Brand Original Quality Watches", "Master Copy Watches"], 'Invalid category')
     .required('Category is required'),
   brand: Yup.string()
     .min(2, 'Brand must be at least 2 characters')

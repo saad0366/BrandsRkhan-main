@@ -47,6 +47,7 @@ export const createProduct = async (productData) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 120000, // 2 minutes for image uploads
   });
   return response;
 };
@@ -74,6 +75,7 @@ export const updateProduct = async (id, productData) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 120000, // 2 minutes for image uploads
   });
   return response;
 };

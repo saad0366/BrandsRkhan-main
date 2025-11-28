@@ -108,6 +108,8 @@ exports.createProduct = async (req, res) => {
     const { name, description, price, category, brand, stock } = req.body;
     const images = [];
 
+
+
     // Check Cloudinary config
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
       return res.status(500).json({
@@ -127,7 +129,7 @@ exports.createProduct = async (req, res) => {
           try {
             console.log('Uploading file:', file.path);
             const result = await cloudinary.uploader.upload(file.path, {
-              timeout: 60000, // 60 seconds
+              timeout: 120000, // 2 minutes
               resource_type: 'auto',
               quality: 'auto:good',
               fetch_format: 'auto'

@@ -34,10 +34,34 @@ const CreateProduct = () => {
   const [imagePreview, setImagePreview] = useState([]);
 
   useEffect(() => {
+    // Always fetch fresh data when component mounts
     dispatch(getBrands());
     dispatch(getCategories());
     return () => {
       dispatch(clearError());
+    };
+  }, [dispatch]);
+
+  // Refresh categories and brands when component becomes visible or when navigating back
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        dispatch(getBrands());
+        dispatch(getCategories());
+      }
+    };
+    
+    const handleFocus = () => {
+      dispatch(getBrands());
+      dispatch(getCategories());
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [dispatch]);
 
@@ -160,7 +184,7 @@ const CreateProduct = () => {
                     helperText={touched.price && errors.price}
                     margin="normal"
                     InputProps={{
-                      startAdornment: '$',
+                      startAdornment: 'PKR',
                     }}
                   />
                 </Grid>
